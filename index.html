@@ -118,20 +118,76 @@
   const supabaseClient =
     supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
- async function checkSession() {
-  const { data: { session }, error } =
-    await supabaseClient.auth.getSession();
+async function checkSession() {
+  const statusBox = document.querySelector(".card");
+
+  try {
+    const { data: { session }, error } =
+      await supabaseClient.auth.getSession();
+
+    if (error) throw error;
+
+    if (session) {
+      statusBox.innerHTML = `
+        <h2>Keen Lawn</h2>
+        <p>Logged in as ${session.user.email}</p>
+        <button onclick="logout()">Log Out</button>
+      `;
+    } else {
+      statusBox.innerHTML = `
+        <h2>Sign In</h2>
+        <p>Log in to manage your lawn business.</p>
+
+        <input
+          id="email"
+          type="email"
+          placeholder="Email address"
+        >
+
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+        >
+
+        <button onclick="login()">Sign In</button>
+
+        <p id="loginMessage"></p>
+      `;
+    }
+  } catch (error) {
+    statusBox.innerHTML = `
+      <h2>Connection Error</h2>
+      <p>${error.message}</p>
+    `;
+  }
+}
+
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const message = document.getElementById("loginMessage");
+
+  message.textContent = "Signing in...";
+
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
 
   if (error) {
-    console.error("Session error:", error);
+    message.textContent = error.message;
     return;
   }
 
-  if (session) {
-    console.log("Logged in:", session.user.email);
-  } else {
-    console.log("No active login.");
-  }
+  message.textContent = "Login successful.";
+  checkSession();
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+  checkSession();
 }
 
 checkSession();
