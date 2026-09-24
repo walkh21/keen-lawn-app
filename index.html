@@ -1202,9 +1202,18 @@ async function saveExpense() {
   app.innerHTML = `
     <div class="card">
       <h2>Schedule</h2>
-      <p>Loading scheduled jobs...</p>
+      <p>Loading route plan...</p>
     </div>
   `;
+
+  const today = new Date();
+
+  const todayString =
+    `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
 
   const { data: jobs, error } =
     await supabaseClient
@@ -1215,9 +1224,13 @@ async function saveExpense() {
           first_name,
           last_name,
           address,
+          state,
+          zip_code,
           phone
         )
       `)
+      .gte("scheduled_date", todayString)
+      .neq("status", "Cancelled")
       .order("scheduled_date", {
         ascending: true
       })
@@ -1245,14 +1258,54 @@ async function saveExpense() {
     return;
   }
 
-  const jobCards =
-    !jobs || jobs.length === 0
-      ? `
+  const jobsByDate = {};
+
+  (jobs || []).forEach(job => {
+    if (!jobsByDate[job.scheduled_date]) {
+      jobsByDate[job.scheduled_date] = [];
+    }
+
+    jobsByDate[job.scheduled_date].push(job);
+  });
+
+  const dates =
+    Object.keys(jobsByDate).sort();
+
+  let scheduleHtml = "";
+
+  if (dates.length === 0) {
+    scheduleHtml = `
+      <div class="card">
         <p class="empty">
-          No jobs scheduled yet.
+          No upcoming jobs scheduled.
         </p>
-      `
-      : jobs.map(job => {
+      </div>
+    `;
+  } else {
+    scheduleHtml = dates.map(date => {
+      const dayJobs = jobsByDate[date];
+
+      const dayRevenue =
+        dayJobs.reduce(
+          (total, job) =>
+            total + Number(job.price || 0),
+          0
+        );
+
+      const displayDate =
+        new Date(`${date}T12:00:00`)
+          .toLocaleDateString(
+            undefined,
+            {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric"
+            }
+          );
+
+      const stops = dayJobs.map(
+        (job, index) => {
           const client = job.clients || {};
 
           const clientName =
@@ -1270,57 +1323,107 @@ async function saveExpense() {
               ? `$${Number(job.price).toFixed(2)}`
               : "No price";
 
+          const address = [
+            client.address,
+            client.state,
+            client.zip_code
+          ].filter(Boolean).join(", ");
+
+          const directionsUrl =
+            address
+              ? `https://www.google.com/maps/dir/?api=1&destination=${
+                  encodeURIComponent(address)
+                }`
+              : "";
+
           return `
-            <div
-              class="client"
-              style="margin-bottom:12px;">
+            <div class="client">
 
               <div class="client-name">
-                ${escapeHtml(job.scheduled_date)}
-                •
-                ${escapeHtml(time)}
+                Stop ${index + 1} —
+                ${escapeHtml(clientName)}
               </div>
 
               <div class="client-detail">
-                <strong>
-                  ${escapeHtml(clientName)}
-                </strong>
+                ${escapeHtml(time)}
+                • ${escapeHtml(price)}
+                • ${escapeHtml(
+                  job.status || "Scheduled"
+                )}
               </div>
 
               ${
-                client.address
+                address
                   ? `
                     <div class="client-detail">
-                      ${escapeHtml(client.address)}
+                      ${escapeHtml(address)}
+                    </div>
+
+                    <button
+                      class="secondary"
+                      onclick="window.open(
+                        '${directionsUrl}',
+                        '_blank'
+                      )">
+                      Directions
+                    </button>
+                  `
+                  : `
+                    <div class="client-detail">
+                      No address saved
                     </div>
                   `
-                  : ""
               }
-
-              <div class="client-detail">
-                ${escapeHtml(price)}
-                • ${escapeHtml(job.status)}
-                • ${escapeHtml(job.payment_status)}
-              </div>
 
               <button
                 class="secondary"
                 onclick="showEditJob(
                   '${job.id}',
                   '${job.client_id}'
-                )"
-                style="margin-top:10px;">
+                )">
                 Manage Job
               </button>
 
             </div>
           `;
-        }).join("");
+        }
+      ).join("");
+
+      return `
+        <div class="card">
+
+          <h2>
+            ${escapeHtml(displayDate)}
+          </h2>
+
+          <div class="client-detail"
+            style="
+              margin-bottom:14px;
+              font-size:15px;
+            ">
+            <strong>
+              ${dayJobs.length}
+              ${dayJobs.length === 1
+                ? "Stop"
+                : "Stops"}
+            </strong>
+            • Expected Revenue:
+            <strong>
+              $${dayRevenue.toFixed(2)}
+            </strong>
+          </div>
+
+          ${stops}
+
+        </div>
+      `;
+    }).join("");
+  }
 
   app.innerHTML = `
     <div class="dashboard-top">
       <div>
-        <strong>Keen Lawn Schedule</strong>
+        <strong>Keen Lawn Route Planner</strong>
       </div>
 
       <button
@@ -1330,11 +1433,7 @@ async function saveExpense() {
       </button>
     </div>
 
-    <div class="card">
-      <h2>Upcoming Jobs</h2>
-
-      ${jobCards}
-    </div>
+    ${scheduleHtml}
   `;
 }
   
