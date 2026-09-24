@@ -278,6 +278,14 @@
 </div>
 
 <div class="card">
+  <h2>Business Summary</h2>
+
+  <div id="businessSummary">
+    <p class="empty">Loading business summary...</p>
+  </div>
+</div>
+
+<div class="card">
   <h2>Clients</h2>
 
         <button onclick="showAddClient()">
@@ -298,8 +306,76 @@
 
 await loadClients();
 await loadTodayJobs();
+await loadBusinessSummary();
 }
 
+async function loadBusinessSummary() {
+  const summary =
+    document.getElementById("businessSummary");
+
+  if (!summary) return;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select("price, payment_status, status");
+
+  if (error) {
+    console.error(error);
+
+    summary.innerHTML = `
+      <p class="empty">
+        Could not load business summary:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  const allJobs = jobs || [];
+
+  const totalRevenue = allJobs
+    .filter(job => job.payment_status === "Paid")
+    .reduce(
+      (total, job) =>
+        total + Number(job.price || 0),
+      0
+    );
+
+  const unpaidRevenue = allJobs
+    .filter(job =>
+      job.payment_status === "Unpaid" &&
+      job.status !== "Cancelled"
+    )
+    .reduce(
+      (total, job) =>
+        total + Number(job.price || 0),
+      0
+    );
+
+  const completedJobs =
+    allJobs.filter(
+      job => job.status === "Complete"
+    ).length;
+
+  summary.innerHTML = `
+    <div class="client-detail">
+      <strong>Revenue Collected:</strong>
+      $${totalRevenue.toFixed(2)}
+    </div>
+
+    <div class="client-detail">
+      <strong>Outstanding:</strong>
+      $${unpaidRevenue.toFixed(2)}
+    </div>
+
+    <div class="client-detail">
+      <strong>Completed Jobs:</strong>
+      ${completedJobs}
+    </div>
+  `;
+}
+  
 async function loadTodayJobs() {
   const list = document.getElementById("todayJobList");
 
@@ -1327,6 +1403,47 @@ async function showEditJob(jobId, clientId) {
   `;
 }
 
+function getNextServiceDate(currentDate, frequency) {
+  if (!currentDate || !frequency) {
+    return null;
+  }
+
+  const parts = currentDate.split("-");
+
+  const date = new Date(
+    Number(parts[0]),
+    Number(parts[1]) - 1,
+    Number(parts[2])
+  );
+
+  switch (frequency) {
+    case "Weekly":
+      date.setDate(date.getDate() + 7);
+      break;
+
+    case "Biweekly":
+      date.setDate(date.getDate() + 14);
+      break;
+
+    case "Monthly":
+      date.setMonth(date.getMonth() + 1);
+      break;
+
+    default:
+      return null;
+  }
+
+  const year = date.getFullYear();
+
+  const month =
+    String(date.getMonth() + 1).padStart(2, "0");
+
+  const day =
+    String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+  
   async function updateJob(jobId, clientId) {
   const message =
     document.getElementById("editJobMessage");
@@ -1385,6 +1502,79 @@ async function showEditJob(jobId, clientId) {
     return;
   }
 
+if (status === "Complete") {
+  const { data: client, error: clientError } =
+    await supabaseClient
+      .from("clients")
+      .select("frequency")
+      .eq("id", clientId)
+      .single();
+
+  if (clientError) {
+    console.error(clientError);
+  } else {
+    const nextDate =
+      getNextServiceDate(
+        scheduledDate,
+        client.frequency
+      );
+
+    if (nextDate) {
+      const {
+        data: existingJobs,
+        error: existingError
+      } =
+        await supabaseClient
+          .from("jobs")
+          .select("id")
+          .eq("client_id", clientId)
+          .eq("scheduled_date", nextDate)
+          .neq("status", "Cancelled")
+          .limit(1);
+
+      if (existingError) {
+        console.error(existingError);
+      } else if (
+        !existingJobs ||
+        existingJobs.length === 0
+      ) {
+        const {
+          data: { user }
+        } =
+          await supabaseClient.auth.getUser();
+
+        if (user) {
+          const { error: nextJobError } =
+            await supabaseClient
+              .from("jobs")
+              .insert({
+                user_id: user.id,
+                client_id: clientId,
+                scheduled_date: nextDate,
+                scheduled_time:
+                  scheduledTime || null,
+                status: "Scheduled",
+                price:
+                  price ? Number(price) : null,
+                payment_status: "Unpaid",
+                notes: notes || null
+              });
+
+          if (nextJobError) {
+            console.error(nextJobError);
+
+            message.textContent =
+              `Job completed, but next service could not be scheduled: ${nextJobError.message}`;
+
+            return;
+          }
+        }
+      }
+    }
+  }
+}
+message.textContent = "Job updated.";
+    
   await showClientProfile(clientId);
 }
   
