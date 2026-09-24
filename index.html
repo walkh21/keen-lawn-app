@@ -1851,26 +1851,78 @@ if (scope === "future") {
       .eq("id", jobId)
       .single();
 
+const originalDate =
+  currentJob?.scheduled_date;
+
+const dateChanged =
+  originalDate &&
+  scheduledDate !== originalDate;
+  
   if (jobError || !currentJob?.recurrence_id) {
     error =
       jobError ||
       new Error("Recurring series could not be found.");
   } else {
+    const { data: futureJobs, error: futureJobsError } =
+  await supabaseClient
+    .from("jobs")
+    .select("id, scheduled_date")
+    .eq("recurrence_id", currentJob.recurrence_id)
+    .gte(
+      "scheduled_date",
+      currentJob.scheduled_date
+    )
+    .order("scheduled_date", {
+      ascending: true
+    });
+
+if (futureJobsError) {
+  error = futureJobsError;
+} else {
+  const original =
+    new Date(`${originalDate}T12:00:00`);
+
+  const changed =
+    new Date(`${scheduledDate}T12:00:00`);
+
+  const dayDifference =
+    Math.round(
+      (changed - original) /
+      (1000 * 60 * 60 * 24)
+    );
+
+  for (const futureJob of futureJobs) {
+    const oldDate =
+      new Date(
+        `${futureJob.scheduled_date}T12:00:00`
+      );
+
+    if (dateChanged) {
+      oldDate.setDate(
+        oldDate.getDate() + dayDifference
+      );
+    }
+
+    const newDate =
+      oldDate.toISOString().split("T")[0];
+
     const result =
       await supabaseClient
         .from("jobs")
-       .update({
-  scheduled_time: updates.scheduled_time,
-  price: updates.price,
-  notes: updates.notes
-})
-        .eq("recurrence_id", currentJob.recurrence_id)
-        .gte(
-          "scheduled_date",
-          currentJob.scheduled_date
-        );
+        .update({
+          scheduled_date: newDate,
+          scheduled_time: updates.scheduled_time,
+          price: updates.price,
+          notes: updates.notes
+        })
+        .eq("id", futureJob.id);
 
-    error = result.error;
+    if (result.error) {
+      error = result.error;
+      break;
+    }
+  }
+}
   }
 } else {
   const result =
