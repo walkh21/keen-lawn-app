@@ -265,12 +265,20 @@
   <h2>Schedule</h2>
 
   <button onclick="showSchedule()">
-    View Schedule
-  </button>
+  View Schedule
+</button>
 </div>
 
-      <div class="card">
-        <h2>Clients</h2>
+<div class="card">
+  <h2>Today's Jobs</h2>
+
+  <div id="todayJobList">
+    <p class="empty">Loading today's jobs...</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Clients</h2>
 
         <button onclick="showAddClient()">
           + Add Client
@@ -288,9 +296,114 @@
       </div>
     `;
 
-    await loadClients();
+await loadClients();
+await loadTodayJobs();
+}
+
+async function loadTodayJobs() {
+  const list = document.getElementById("todayJobList");
+
+  if (!list) return;
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  const todayString = `${year}-${month}-${day}`;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select(`
+        *,
+        clients (
+          first_name,
+          last_name,
+          address,
+          state,
+          zip_code
+        )
+      `)
+      .eq("scheduled_date", todayString)
+      .order("scheduled_time", {
+        ascending: true
+      });
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <p class="empty">
+        Could not load today's jobs:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+
+    return;
   }
 
+  if (!jobs || jobs.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No jobs scheduled for today.
+      </p>
+    `;
+
+    return;
+  }
+
+  list.innerHTML = jobs.map(job => {
+    const client = job.clients || {};
+
+    const name =
+      `${client.first_name || ""} ${client.last_name || ""}`.trim()
+      || "Client";
+
+    const time = job.scheduled_time
+      ? job.scheduled_time.slice(0, 5)
+      : "No time";
+
+    const price = job.price != null
+      ? `$${Number(job.price).toFixed(2)}`
+      : "No price";
+
+    const address = [
+      client.address,
+      client.state,
+      client.zip_code
+    ].filter(Boolean).join(", ");
+
+    return `
+      <div class="client" style="margin-bottom:12px;">
+        <div class="client-name">
+          ${escapeHtml(name)}
+        </div>
+
+        <div class="client-detail">
+          ${escapeHtml(time)}
+          • ${escapeHtml(price)}
+          • ${escapeHtml(job.status || "Scheduled")}
+        </div>
+
+        ${
+          address
+            ? `<div class="client-detail">
+                 ${escapeHtml(address)}
+               </div>`
+            : ""
+        }
+
+        <button
+          class="secondary"
+          onclick="showClientProfile('${job.client_id}')"
+          style="margin-top:10px;">
+          Manage Job
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+  
   function showAddClient() {
     app.innerHTML = `
       <div class="card">
