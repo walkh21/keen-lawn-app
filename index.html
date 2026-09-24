@@ -660,6 +660,13 @@ async function showClientProfile(clientId) {
         ${escapeHtml(client.notes || "None")}
       </p>
 
+<hr style="margin:24px 0;border:0;border-top:1px solid #ddd;">
+
+<h3>Scheduled Jobs</h3>
+
+<div id="clientJobList">
+  <p class="empty">Loading jobs...</p>
+</div>
 <hr style="margin:24px 0;border:0;border-top:1px solid #e4e9e6;">
 
 <h3>Property Photos</h3>
@@ -707,7 +714,7 @@ async function showClientProfile(clientId) {
 
     </div>
 `;
-
+await loadClientJobs(client.id);
 await loadPropertyPhotos(client.id);
 }
 
@@ -887,6 +894,76 @@ async function loadPropertyPhotos(clientId) {
     photoCards.filter(Boolean).join("");
 }
 
+async function loadClientJobs(clientId) {
+  const list =
+    document.getElementById("clientJobList");
+
+  if (!list) return;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("scheduled_date", {
+        ascending: true
+      });
+
+  if (error) {
+    list.innerHTML = `
+      <p class="empty">
+        Could not load jobs:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No jobs scheduled yet.
+      </p>
+    `;
+    return;
+  }
+
+  list.innerHTML = jobs.map(job => {
+    const price =
+      job.price != null
+        ? `$${Number(job.price).toFixed(2)}`
+        : "No price";
+
+    const time =
+      job.scheduled_time
+        ? job.scheduled_time.slice(0, 5)
+        : "No time";
+
+    return `
+      <div class="client" style="margin-bottom:12px;">
+        <div class="client-name">
+          ${escapeHtml(job.scheduled_date)}
+        </div>
+
+        <div class="client-detail">
+          ${escapeHtml(time)}
+          • ${escapeHtml(price)}
+          • ${escapeHtml(job.status)}
+          • ${escapeHtml(job.payment_status)}
+        </div>
+
+        ${
+          job.notes
+            ? `<div class="client-detail">
+                 ${escapeHtml(job.notes)}
+               </div>`
+            : ""
+        }
+      </div>
+    `;
+  }).join("");
+}
+  
 async function showAddJob(clientId) {
   const { data: client, error } =
     await supabaseClient
