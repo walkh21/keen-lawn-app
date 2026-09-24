@@ -245,6 +245,19 @@
     showLogin();
   }
 
+async function goToDashboard() {
+  const {
+    data: { user }
+  } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    showLogin();
+    return;
+  }
+
+  await showDashboard(user);
+}
+  
   async function showDashboard(user) {
     app.innerHTML = `
       <div class="dashboard-top">
@@ -1518,7 +1531,14 @@ ${stops}
 }
   
   async function showClientProfile(clientId) {
-  app.innerHTML = `
+  app.innerHTML = `<div style="margin-bottom:16px;">
+  <button
+    class="secondary"
+    onclick="goToDashboard()"
+  >
+    ← Dashboard
+  </button>
+</div>
     <div class="card">
       <h2>Client Profile</h2>
       <p>Loading client...</p>
