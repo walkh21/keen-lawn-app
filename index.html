@@ -657,6 +657,12 @@ async function showClientProfile(clientId) {
       <button onclick="showEditClient('${client.id}')">
         Edit Client
       </button>
+      
+<button
+  class="secondary"
+  onclick="deactivateClient('${client.id}')">
+  Deactivate Client
+</button>
 
       <button
         class="secondary"
@@ -668,6 +674,30 @@ async function showClientProfile(clientId) {
   `;
 }
 
+  async function deactivateClient(clientId) {
+  const confirmed = confirm(
+    "Deactivate this client? They will be removed from your active client list, but their information will remain saved."
+  );
+
+  if (!confirmed) return;
+
+  const { error } =
+    await supabaseClient
+      .from("clients")
+      .update({ active: false })
+      .eq("id", clientId);
+
+  if (error) {
+    alert(
+      "Could not deactivate client: " +
+      error.message
+    );
+    return;
+  }
+
+  await returnToDashboard();
+}
+  
   async function showEditClient(clientId) {
   const { data: client, error } =
     await supabaseClient
