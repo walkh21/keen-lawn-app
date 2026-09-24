@@ -286,6 +286,14 @@
 </div>
 
 <div class="card">
+  <h2>Expenses</h2>
+
+  <button onclick="showExpenses()">
+    Manage Expenses
+  </button>
+</div>
+
+<div class="card">
   <h2>Upcoming Jobs</h2>
 
   <div id="upcomingJobList">
@@ -585,6 +593,235 @@ async function loadTodayJobs() {
       </div>
     `;
   }).join("");
+}
+
+async function showExpenses() {
+  app.innerHTML = `
+    <div class="dashboard-top">
+      <div>
+        <strong>Keen Lawn Expenses</strong>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="returnToDashboard()">
+        Dashboard
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Add Expense</h2>
+
+      <label>Date</label>
+      <input id="expenseDate" type="date">
+
+      <label>Category</label>
+      <select id="expenseCategory">
+        <option value="">Select category</option>
+        <option value="Fuel">Fuel</option>
+        <option value="Equipment">Equipment</option>
+        <option value="Repairs">Repairs</option>
+        <option value="Supplies">Supplies</option>
+        <option value="Insurance">Insurance</option>
+        <option value="Advertising">Advertising</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label>Description</label>
+      <input
+        id="expenseDescription"
+        placeholder="Example: Gas for mower">
+
+      <label>Amount</label>
+      <input
+        id="expenseAmount"
+        type="number"
+        step="0.01"
+        min="0"
+        placeholder="0.00">
+
+      <button onclick="saveExpense()">
+        Save Expense
+      </button>
+
+      <div
+        id="expenseMessage"
+        class="message">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Expense History</h2>
+
+      <div id="expenseList">
+        <p class="empty">
+          Loading expenses...
+        </p>
+      </div>
+    </div>
+  `;
+
+  const today = new Date();
+
+  document.getElementById("expenseDate").value =
+    `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
+
+  await loadExpenses();
+}
+
+async function loadExpenses() {
+  const list =
+    document.getElementById("expenseList");
+
+  if (!list) return;
+
+  const { data: expenses, error } =
+    await supabaseClient
+      .from("expenses")
+      .select("*")
+      .order("expense_date", {
+        ascending: false
+      });
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <p class="empty">
+        Could not load expenses:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!expenses || expenses.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No expenses recorded yet.
+      </p>
+    `;
+    return;
+  }
+
+  list.innerHTML = expenses.map(expense => {
+    const amount =
+      `$${Number(expense.amount || 0).toFixed(2)}`;
+
+    return `
+      <div class="client">
+        <div class="client-name">
+          ${escapeHtml(expense.category || "Expense")}
+          • ${escapeHtml(amount)}
+        </div>
+
+        <div class="client-detail">
+          ${escapeHtml(expense.expense_date)}
+        </div>
+
+        ${
+          expense.description
+            ? `
+              <div class="client-detail">
+                ${escapeHtml(expense.description)}
+              </div>
+            `
+            : ""
+        }
+      </div>
+    `;
+  }).join("");
+}
+
+async function saveExpense() {
+  const message =
+    document.getElementById("expenseMessage");
+
+  const expenseDate =
+    document.getElementById("expenseDate").value;
+
+  const category =
+    document.getElementById("expenseCategory").value;
+
+  const description =
+    document.getElementById("expenseDescription")
+      .value
+      .trim();
+
+  const amount =
+    document.getElementById("expenseAmount").value;
+
+  if (!expenseDate) {
+    message.textContent =
+      "Please select an expense date.";
+    return;
+  }
+
+  if (!category) {
+    message.textContent =
+      "Please select a category.";
+    return;
+  }
+
+  if (!amount || Number(amount) <= 0) {
+    message.textContent =
+      "Please enter a valid expense amount.";
+    return;
+  }
+
+  message.textContent = "Saving expense...";
+
+  const {
+    data: { user },
+    error: userError
+  } = await supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    message.textContent =
+      "Your login session could not be verified.";
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("expenses")
+      .insert({
+        user_id: user.id,
+        expense_date: expenseDate,
+        category: category,
+        description: description || null,
+        amount: Number(amount)
+      });
+
+  if (error) {
+    console.error(error);
+
+    message.textContent =
+      "Could not save expense: " +
+      error.message;
+
+    return;
+  }
+
+  document.getElementById(
+    "expenseCategory"
+  ).value = "";
+
+  document.getElementById(
+    "expenseDescription"
+  ).value = "";
+
+  document.getElementById(
+    "expenseAmount"
+  ).value = "";
+
+  message.textContent = "Expense saved.";
+
+  await loadExpenses();
 }
   
   function showAddClient() {
