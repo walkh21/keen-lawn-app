@@ -1949,7 +1949,11 @@ for (let i = 0; i < totalJobs; i++) {
   }
 
   const formattedDate =
-    jobDate.toISOString().split("T")[0];
+  `${jobDate.getFullYear()}-${String(
+    jobDate.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    jobDate.getDate()
+  ).padStart(2, "0")}`;
 
   jobsToCreate.push({
     user_id: user.id,
@@ -2254,7 +2258,11 @@ if (futureJobsError) {
     }
 
     const newDate =
-      oldDate.toISOString().split("T")[0];
+  `${oldDate.getFullYear()}-${String(
+    oldDate.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    oldDate.getDate()
+  ).padStart(2, "0")}`;
 
     const isCurrentJob =
   futureJob.id === jobId;
