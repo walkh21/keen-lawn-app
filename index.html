@@ -1539,6 +1539,11 @@ async function saveJob(clientId) {
 
   const jobsToCreate = [];
 
+const recurrenceId =
+  recurrence !== "none"
+    ? crypto.randomUUID()
+    : null;
+  
 const firstDate =
   new Date(`${scheduledDate}T12:00:00`);
 
@@ -1583,6 +1588,12 @@ for (let i = 0; i < totalJobs; i++) {
   jobsToCreate.push({
     user_id: user.id,
     client_id: clientId,
+    recurrence_id: recurrenceId,
+recurrence_type:
+  recurrence !== "none"
+    ? recurrence
+    : null,
+recurrence_end_date: null,
     scheduled_date: formattedDate,
     scheduled_time: scheduledTime || null,
     status: status,
