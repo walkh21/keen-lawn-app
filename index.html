@@ -2260,11 +2260,13 @@ if (futureJobsError) {
       await supabaseClient
         .from("jobs")
         .update({
-          scheduled_date: newDate,
-          scheduled_time: updates.scheduled_time,
-          price: updates.price,
-          notes: updates.notes
-        })
+  scheduled_date: newDate,
+  scheduled_time: updates.scheduled_time,
+  price: updates.price,
+  status: updates.status,
+  payment_status: updates.payment_status,
+  notes: updates.notes
+})
         .eq("id", futureJob.id);
 
     if (result.error) {
