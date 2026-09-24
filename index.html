@@ -685,12 +685,13 @@ async function showClientProfile(clientId) {
   <p class="empty">Loading photos...</p>
 </div>
 
-      <button onclick="showEditClient('${client.id}')">
-        <button onclick="showAddJob('${client.id}')">
+   <button onclick="showAddJob('${client.id}')">
   + Add Job
 </button>
-        Edit Client
-      </button>
+
+<button onclick="showEditClient('${client.id}')">
+  Edit Client
+</button>   
       
 <button
   class="secondary"
@@ -932,8 +933,8 @@ async function showAddJob(clientId) {
 
       <label>Payment Status</label>
       <select id="jobPaymentStatus">
-        <option value="unpaid">Unpaid</option>
-        <option value="paid">Paid</option>
+        <option value="Unpaid">Unpaid</option>
+        <option value="Paid">Paid</option>
       </select>
 
       <label>Job Notes</label>
