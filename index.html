@@ -286,6 +286,16 @@
 </div>
 
 <div class="card">
+  <h2>Upcoming Jobs</h2>
+
+  <div id="upcomingJobList">
+    <p class="empty">
+      Loading upcoming jobs...
+    </p>
+  </div>
+</div>
+
+<div class="card">
   <h2>Clients</h2>
 
         <button onclick="showAddClient()">
@@ -307,8 +317,105 @@
 await loadClients();
 await loadTodayJobs();
 await loadBusinessSummary();
+await loadUpcomingJobs();    
 }
 
+async function loadUpcomingJobs() {
+  const list =
+    document.getElementById("upcomingJobList");
+
+  if (!list) return;
+
+  const today =
+    new Date().toISOString().split("T")[0];
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select(`
+        *,
+        clients (
+          first_name,
+          last_name
+        )
+      `)
+      .gte("scheduled_date", today)
+      .neq("status", "Cancelled")
+      .order("scheduled_date", {
+        ascending: true
+      })
+      .order("scheduled_time", {
+        ascending: true
+      })
+      .limit(10);
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <p class="empty">
+        Could not load upcoming jobs:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No upcoming jobs scheduled.
+      </p>
+    `;
+    return;
+  }
+
+  list.innerHTML = jobs.map(job => {
+    const clientName =
+      `${job.clients?.first_name || ""}
+       ${job.clients?.last_name || ""}`.trim()
+      || "Client";
+
+    const time =
+      job.scheduled_time
+        ? job.scheduled_time.slice(0, 5)
+        : "No time";
+
+    const price =
+      job.price != null
+        ? `$${Number(job.price).toFixed(2)}`
+        : "No price";
+
+    return `
+      <div class="client"
+        style="margin-bottom:12px;">
+
+        <div class="client-name">
+          ${escapeHtml(clientName)}
+        </div>
+
+        <div class="client-detail">
+          ${escapeHtml(job.scheduled_date)}
+          • ${escapeHtml(time)}
+          • ${escapeHtml(price)}
+          • ${escapeHtml(job.status)}
+        </div>
+
+        <button
+          class="secondary"
+          onclick="showEditJob(
+            '${job.id}',
+            '${job.client_id}'
+          )"
+          style="margin-top:10px;">
+          Manage Job
+        </button>
+
+      </div>
+    `;
+  }).join("");
+}
+  
 async function loadBusinessSummary() {
   const summary =
     document.getElementById("businessSummary");
