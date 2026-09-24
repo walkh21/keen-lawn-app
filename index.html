@@ -1771,6 +1771,21 @@ ${
         Save Changes
       </button>
 
+${
+  job.recurrence_id
+    ? `
+      <button
+        class="secondary"
+        onclick="cancelFutureJobs(
+          '${job.id}',
+          '${job.client_id}'
+        )">
+        Cancel This & Future Service
+      </button>
+    `
+    : ""
+}
+
       <button
         class="secondary"
         onclick="showClientProfile('${job.client_id}')">
@@ -1944,6 +1959,53 @@ if (futureJobsError) {
   }
 
   message.textContent = "Job updated.";
+
+  await showClientProfile(clientId);
+}
+
+async function cancelFutureJobs(jobId, clientId) {
+  const confirmed = confirm(
+    "Cancel this service and all future visits in this recurring series?"
+  );
+
+  if (!confirmed) return;
+
+  const { data: currentJob, error: jobError } =
+    await supabaseClient
+      .from("jobs")
+      .select("recurrence_id, scheduled_date")
+      .eq("id", jobId)
+      .single();
+
+  if (jobError || !currentJob?.recurrence_id) {
+    alert(
+      "Could not find the recurring service."
+    );
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("jobs")
+      .update({
+        status: "Cancelled"
+      })
+      .eq(
+        "recurrence_id",
+        currentJob.recurrence_id
+      )
+      .gte(
+        "scheduled_date",
+        currentJob.scheduled_date
+      );
+
+  if (error) {
+    alert(
+      "Could not cancel future service: " +
+      error.message
+    );
+    return;
+  }
 
   await showClientProfile(clientId);
 }
