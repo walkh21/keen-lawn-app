@@ -1384,6 +1384,14 @@ async function loadClientJobs(clientId) {
         ? job.scheduled_time.slice(0, 5)
         : "No time";
 
+const recurrenceLabel =
+  job.recurrence_type
+    ? job.recurrence_type === "biweekly"
+      ? "Every 2 Weeks"
+      : job.recurrence_type.charAt(0).toUpperCase() +
+        job.recurrence_type.slice(1)
+    : null;
+    
     return `
       <div class="client" style="margin-bottom:12px;">
         <div class="client-name">
@@ -1396,6 +1404,14 @@ async function loadClientJobs(clientId) {
           • ${escapeHtml(job.status)}
           • ${escapeHtml(job.payment_status)}
         </div>
+
+${
+  recurrenceLabel
+    ? `<div class="client-detail">
+         ↻ Recurring: ${escapeHtml(recurrenceLabel)}
+       </div>`
+    : ""
+}
 
         ${
           job.notes
