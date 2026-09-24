@@ -2256,19 +2256,29 @@ if (futureJobsError) {
     const newDate =
       oldDate.toISOString().split("T")[0];
 
-    const result =
-      await supabaseClient
-        .from("jobs")
-        .update({
+    const isCurrentJob =
+  futureJob.id === jobId;
+
+const futureUpdates = {
   scheduled_date: newDate,
   scheduled_time: updates.scheduled_time,
   price: updates.price,
-  status: updates.status,
-  payment_status: updates.payment_status,
   notes: updates.notes
-})
-        .eq("id", futureJob.id);
+};
 
+if (isCurrentJob) {
+  futureUpdates.status = updates.status;
+  futureUpdates.payment_status =
+    updates.payment_status;
+  futureUpdates.completed_at =
+    updates.completed_at;
+}
+
+const result =
+  await supabaseClient
+    .from("jobs")
+    .update(futureUpdates)
+    .eq("id", futureJob.id);
     if (result.error) {
       error = result.error;
       break;
