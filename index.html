@@ -268,6 +268,12 @@
           + Add Client
         </button>
 
+<button
+  class="secondary"
+  onclick="showInactiveClients()">
+  View Inactive Clients
+</button>
+
         <div id="clientList">
           <p class="empty">Loading clients...</p>
         </div>
@@ -928,6 +934,97 @@ function buildFrequencyOptions(current) {
     </option>`;
   }).join("");
 }
+
+async function showInactiveClients() {
+  app.innerHTML = `
+    <div class="card">
+      <h2>Inactive Clients</h2>
+
+      <div id="inactiveClientList">
+        <p class="empty">Loading inactive clients...</p>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="returnToDashboard()">
+        Back to Active Clients
+      </button>
+    </div>
+  `;
+
+  const { data, error } =
+    await supabaseClient
+      .from("clients")
+      .select("*")
+      .eq("active", false)
+      .order("last_name", {
+        ascending: true
+      });
+
+  const list =
+    document.getElementById("inactiveClientList");
+
+  if (error) {
+    list.innerHTML = `
+      <p class="empty">
+        Could not load inactive clients:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No inactive clients.
+      </p>
+    `;
+    return;
+  }
+
+  list.innerHTML = data.map(client => {
+    const name =
+      `${client.first_name || ""} ${client.last_name || ""}`.trim();
+
+    return `
+      <div class="client">
+        <div class="client-name">
+          ${escapeHtml(name)}
+        </div>
+
+        <div class="client-detail">
+          ${escapeHtml(client.phone || "No phone number")}
+        </div>
+
+        <button
+          onclick="reactivateClient('${client.id}')">
+          Reactivate Client
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+
+
+async function reactivateClient(clientId) {
+  const { error } =
+    await supabaseClient
+      .from("clients")
+      .update({ active: true })
+      .eq("id", clientId);
+
+  if (error) {
+    alert(
+      "Could not reactivate client: " +
+      error.message
+    );
+    return;
+  }
+
+  await showInactiveClients();
+}
+  
   async function returnToDashboard() {
     const {
       data: { user }
