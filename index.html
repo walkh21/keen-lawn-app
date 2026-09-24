@@ -1326,6 +1326,14 @@ async function showAddJob(clientId) {
         <option value="Paid">Paid</option>
       </select>
 
+<label>Repeat Service</label>
+<select id="jobRecurrence">
+  <option value="none">One Time</option>
+  <option value="weekly">Weekly</option>
+  <option value="biweekly">Every 2 Weeks</option>
+  <option value="monthly">Monthly</option>
+</select>
+
       <label>Job Notes</label>
       <textarea
         id="jobNotes"
@@ -1364,6 +1372,9 @@ async function saveJob(clientId) {
   const paymentStatus =
     document.getElementById("jobPaymentStatus").value;
 
+  const recurrence =
+  document.getElementById("jobRecurrence").value;
+  
   const notes =
     document.getElementById("jobNotes").value.trim();
 
@@ -1385,19 +1396,65 @@ async function saveJob(clientId) {
     return;
   }
 
-  const { error } =
-    await supabaseClient
-      .from("jobs")
-      .insert({
-        user_id: user.id,
-        client_id: clientId,
-        scheduled_date: scheduledDate,
-        scheduled_time: scheduledTime || null,
-        status: status,
-        price: price ? Number(price) : null,
-        payment_status: paymentStatus,
-        notes: notes || null
-      });
+  const jobsToCreate = [];
+
+const firstDate =
+  new Date(`${scheduledDate}T12:00:00`);
+
+let totalJobs = 1;
+
+if (recurrence === "weekly") {
+  totalJobs = 12;
+}
+
+if (recurrence === "biweekly") {
+  totalJobs = 8;
+}
+
+if (recurrence === "monthly") {
+  totalJobs = 6;
+}
+
+for (let i = 0; i < totalJobs; i++) {
+  const jobDate = new Date(firstDate);
+
+  if (recurrence === "weekly") {
+    jobDate.setDate(
+      firstDate.getDate() + (i * 7)
+    );
+  }
+
+  if (recurrence === "biweekly") {
+    jobDate.setDate(
+      firstDate.getDate() + (i * 14)
+    );
+  }
+
+  if (recurrence === "monthly") {
+    jobDate.setMonth(
+      firstDate.getMonth() + i
+    );
+  }
+
+  const formattedDate =
+    jobDate.toISOString().split("T")[0];
+
+  jobsToCreate.push({
+    user_id: user.id,
+    client_id: clientId,
+    scheduled_date: formattedDate,
+    scheduled_time: scheduledTime || null,
+    status: status,
+    price: price ? Number(price) : null,
+    payment_status: paymentStatus,
+    notes: notes || null
+  });
+}
+
+const { error } =
+  await supabaseClient
+    .from("jobs")
+    .insert(jobsToCreate);
 
   if (error) {
     console.error(error);
