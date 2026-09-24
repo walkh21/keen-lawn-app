@@ -1285,7 +1285,37 @@ async function saveExpense() {
   } else {
     scheduleHtml = dates.map(date => {
       const dayJobs = jobsByDate[date];
+dayJobs.sort((a, b) => {
+  const clientA = a.clients || {};
+  const clientB = b.clients || {};
 
+  // Jobs with an assigned time stay in time order.
+  const timeA = a.scheduled_time || "";
+  const timeB = b.scheduled_time || "";
+
+  if (timeA && timeB && timeA !== timeB) {
+    return timeA.localeCompare(timeB);
+  }
+
+  // If only one job has a scheduled time,
+  // keep that appointment ahead of flexible jobs.
+  if (timeA && !timeB) return -1;
+  if (!timeA && timeB) return 1;
+
+  // Flexible jobs are grouped by ZIP code.
+  const zipA = clientA.zip_code || "";
+  const zipB = clientB.zip_code || "";
+
+  if (zipA !== zipB) {
+    return zipA.localeCompare(zipB);
+  }
+
+  // Within the same ZIP code, group by address.
+  const addressA = clientA.address || "";
+  const addressB = clientB.address || "";
+
+  return addressA.localeCompare(addressB);
+});
       const dayRevenue =
         dayJobs.reduce(
           (total, job) =>
