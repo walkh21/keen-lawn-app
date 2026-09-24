@@ -118,35 +118,23 @@
   const supabaseClient =
     supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  async function testConnection() {
-    const status =
-      document.getElementById("connectionStatus");
+ async function checkSession() {
+  const { data: { session }, error } =
+    await supabaseClient.auth.getSession();
 
-    try {
-      const { data, error } =
-        await supabaseClient
-          .from("clients")
-          .select("id")
-          .limit(1);
-
-      if (error) {
-        status.textContent =
-          "Database reached. Login setup is next.";
-        console.log(error);
-        return;
-      }
-
-      status.textContent =
-        "✓ Connected to Keen Lawn database";
-    } catch (error) {
-      status.textContent =
-        "Connection error — check configuration.";
-      console.error(error);
-    }
+  if (error) {
+    console.error("Session error:", error);
+    return;
   }
 
-  testConnection();
-</script>
+  if (session) {
+    console.log("Logged in:", session.user.email);
+  } else {
+    console.log("No active login.");
+  }
+}
 
+checkSession(); 
+</script>
 </body>
 </html>
