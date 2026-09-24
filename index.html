@@ -660,6 +660,32 @@ async function showClientProfile(clientId) {
         ${escapeHtml(client.notes || "None")}
       </p>
 
+<hr style="margin:24px 0;border:0;border-top:1px solid #e4e9e6;">
+
+<h3>Property Photos</h3>
+
+<input
+  id="propertyPhoto"
+  type="file"
+  accept="image/*"
+  capture="environment">
+
+<input
+  id="photoCaption"
+  type="text"
+  placeholder="Caption — Front yard, gate, before service..."
+  style="margin-top:10px;">
+
+<button onclick="uploadPropertyPhoto('${client.id}')">
+  Upload Photo
+</button>
+
+<div id="photoMessage" class="message"></div>
+
+<div id="propertyPhotoList">
+  <p class="empty">Loading photos...</p>
+</div>
+
       <button onclick="showEditClient('${client.id}')">
         Edit Client
       </button>
@@ -677,9 +703,186 @@ async function showClientProfile(clientId) {
       </button>
 
     </div>
-  `;
+`;
+
+await loadPropertyPhotos(client.id);
 }
 
+async function uploadPropertyPhoto(clientId) {
+  const fileInput =
+    document.getElementById("propertyPhoto");
+
+  const captionInput =
+    document.getElementById("photoCaption");
+
+  const message =
+    document.getElementById("photoMessage");
+
+  const file = fileInput.files[0];
+
+  if (!file) {
+    message.textContent =
+      "Choose a photo first.";
+    return;
+  }
+
+  message.textContent = "Uploading photo...";
+
+  const {
+    data: { user },
+    error: userError
+  } = await supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    message.textContent =
+      "Your login session could not be verified.";
+    return;
+  }
+
+  const extension =
+    file.name.split(".").pop() || "jpg";
+
+  const fileName =
+    `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  const storagePath =
+    `${user.id}/${clientId}/${fileName}`;
+
+  const { error: uploadError } =
+    await supabaseClient.storage
+      .from("property-photos")
+      .upload(storagePath, file);
+
+  if (uploadError) {
+    console.error(uploadError);
+    message.textContent =
+      "Could not upload photo: " +
+      uploadError.message;
+    return;
+  }
+
+  const { error: databaseError } =
+    await supabaseClient
+      .from("property_photos")
+      .insert({
+        user_id: user.id,
+        client_id: clientId,
+        photo_url: storagePath,
+        caption:
+          captionInput.value.trim() || null
+      });
+
+  if (databaseError) {
+    console.error(databaseError);
+
+    // Don't leave an orphaned file behind.
+    await supabaseClient.storage
+      .from("property-photos")
+      .remove([storagePath]);
+
+    message.textContent =
+      "Photo uploaded, but could not save its record: " +
+      databaseError.message;
+
+    return;
+  }
+
+  fileInput.value = "";
+  captionInput.value = "";
+
+  message.textContent = "Photo saved.";
+
+  await loadPropertyPhotos(clientId);
+}
+
+
+async function loadPropertyPhotos(clientId) {
+  const list =
+    document.getElementById("propertyPhotoList");
+
+  if (!list) return;
+
+  const { data: photos, error } =
+    await supabaseClient
+      .from("property_photos")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("created_at", {
+        ascending: false
+      });
+
+  if (error) {
+    list.innerHTML = `
+      <p class="empty">
+        Could not load photos:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!photos || photos.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No property photos yet.
+      </p>
+    `;
+    return;
+  }
+
+  const photoCards =
+    await Promise.all(
+      photos.map(async photo => {
+
+        const { data, error: signedUrlError } =
+          await supabaseClient.storage
+            .from("property-photos")
+            .createSignedUrl(
+              photo.photo_url,
+              3600
+            );
+
+        if (signedUrlError) {
+          console.error(signedUrlError);
+          return "";
+        }
+
+        return `
+          <div style="
+            margin-top:16px;
+            border-top:1px solid #e4e9e6;
+            padding-top:16px;
+          ">
+
+            <img
+              src="${data.signedUrl}"
+              alt="${escapeHtml(
+                photo.caption || "Property photo"
+              )}"
+              style="
+                width:100%;
+                max-height:350px;
+                object-fit:cover;
+                border-radius:10px;
+              ">
+
+            <div style="
+              margin-top:8px;
+              font-size:14px;
+            ">
+              ${escapeHtml(
+                photo.caption || "Property photo"
+              )}
+            </div>
+
+          </div>
+        `;
+      })
+    );
+
+  list.innerHTML =
+    photoCards.filter(Boolean).join("");
+}
   async function deactivateClient(clientId) {
   const confirmed = confirm(
     "Deactivate this client? They will be removed from your active client list, but their information will remain saved."
