@@ -1335,6 +1335,40 @@ dayJobs.sort((a, b) => {
             }
           );
 
+      const routeAddresses =
+  dayJobs
+    .map(job => {
+      const client = job.clients || {};
+
+      return [
+        client.address,
+        client.state,
+        client.zip_code
+      ].filter(Boolean).join(", ");
+    })
+    .filter(Boolean);
+
+const fullRouteUrl =
+  routeAddresses.length > 0
+    ? `https://www.google.com/maps/dir/?api=1&destination=${
+        encodeURIComponent(
+          routeAddresses[
+            routeAddresses.length - 1
+          ]
+        )
+      }${
+        routeAddresses.length > 1
+          ? `&waypoints=${
+              routeAddresses
+                .slice(0, -1)
+                .map(address =>
+                  encodeURIComponent(address)
+                )
+                .join("%7C")
+            }`
+          : ""
+      }`
+    : "";
       const stops = dayJobs.map(
         (job, index) => {
           const client = job.clients || {};
@@ -1444,7 +1478,22 @@ dayJobs.sort((a, b) => {
             </strong>
           </div>
 
-          ${stops}
+          ${
+  fullRouteUrl
+    ? `
+      <button
+        onclick="window.open(
+          '${fullRouteUrl}',
+          '_blank'
+        )"
+        style="margin-bottom:14px;">
+        Start Day Route
+      </button>
+    `
+    : ""
+}
+
+${stops}
 
         </div>
       `;
