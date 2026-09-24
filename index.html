@@ -1809,6 +1809,14 @@ async function updateJob(jobId, clientId) {
       .value
       .trim();
 
+const scopeElement =
+  document.getElementById("editJobScope");
+
+const scope =
+  scopeElement
+    ? scopeElement.value
+    : "single";
+  
   if (!scheduledDate) {
     message.textContent =
       "Please select a service date.";
@@ -1833,11 +1841,48 @@ async function updateJob(jobId, clientId) {
     updates.completed_at = null;
   }
 
-  const { error } =
+  let error;
+
+if (scope === "future") {
+  const { data: currentJob, error: jobError } =
+    await supabaseClient
+      .from("jobs")
+      .select("recurrence_id, scheduled_date")
+      .eq("id", jobId)
+      .single();
+
+  if (jobError || !currentJob?.recurrence_id) {
+    error =
+      jobError ||
+      new Error("Recurring series could not be found.");
+  } else {
+    const result =
+      await supabaseClient
+        .from("jobs")
+        .update({
+          scheduled_time: updates.scheduled_time,
+          price: updates.price,
+          status: updates.status,
+          payment_status: updates.payment_status,
+          notes: updates.notes
+        })
+        .eq("recurrence_id", currentJob.recurrence_id)
+        .gte(
+          "scheduled_date",
+          currentJob.scheduled_date
+        );
+
+    error = result.error;
+  }
+} else {
+  const result =
     await supabaseClient
       .from("jobs")
       .update(updates)
       .eq("id", jobId);
+
+  error = result.error;
+}
 
   if (error) {
     console.error(error);
