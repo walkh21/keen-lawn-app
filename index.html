@@ -614,9 +614,10 @@ async function loadTodayJobs() {
         )
       `)
       .eq("scheduled_date", todayString)
-      .order("scheduled_time", {
-        ascending: true
-      });
+.neq("status", "Cancelled")
+.order("scheduled_time", {
+  ascending: true
+});
 
   if (error) {
     console.error(error);
