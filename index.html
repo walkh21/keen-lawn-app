@@ -667,6 +667,237 @@ async function showClientProfile(clientId) {
     </div>
   `;
 }
+
+  async function showEditClient(clientId) {
+  const { data: client, error } =
+    await supabaseClient
+      .from("clients")
+      .select("*")
+      .eq("id", clientId)
+      .single();
+
+  if (error || !client) {
+    alert("Could not load client.");
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>Edit Client</h2>
+
+      <label>First Name *</label>
+      <input id="editFirstName"
+        value="${escapeHtml(client.first_name || "")}">
+
+      <label>Last Name *</label>
+      <input id="editLastName"
+        value="${escapeHtml(client.last_name || "")}">
+
+      <label>Phone</label>
+      <input id="editPhone"
+        type="tel"
+        value="${escapeHtml(client.phone || "")}">
+
+      <label>Email</label>
+      <input id="editEmail"
+        type="email"
+        value="${escapeHtml(client.email || "")}">
+
+      <label>Address</label>
+      <input id="editAddress"
+        value="${escapeHtml(client.address || "")}">
+
+      <label>State</label>
+      <input id="editState"
+        value="${escapeHtml(client.state || "")}">
+
+      <label>ZIP Code</label>
+      <input id="editZipCode"
+        value="${escapeHtml(client.zip_code || "")}">
+
+      <label>Acreage</label>
+      <input id="editAcreage"
+        type="number"
+        step="0.01"
+        min="0"
+        value="${escapeHtml(client.acreage ?? "")}">
+
+      <label>Yard Difficulty</label>
+      <select id="editYardDifficulty">
+        <option value="">Select</option>
+        <option value="Easy"
+          ${client.yard_difficulty === "Easy" ? "selected" : ""}>
+          Easy
+        </option>
+        <option value="Average"
+          ${client.yard_difficulty === "Average" ? "selected" : ""}>
+          Average
+        </option>
+        <option value="Difficult"
+          ${client.yard_difficulty === "Difficult" ? "selected" : ""}>
+          Difficult
+        </option>
+      </select>
+
+      <label>Preferred Service Day</label>
+      <select id="editPreferredDay">
+        ${buildDayOptions(client.preferred_day)}
+      </select>
+
+      <label>Service Frequency</label>
+      <select id="editFrequency">
+        ${buildFrequencyOptions(client.frequency)}
+      </select>
+
+      <label>Default Price</label>
+      <input id="editDefaultPrice"
+        type="number"
+        step="0.01"
+        min="0"
+        value="${escapeHtml(client.default_price ?? "")}">
+
+      <label>Gate Code</label>
+      <input id="editGateCode"
+        value="${escapeHtml(client.gate_code || "")}">
+
+      <label>Pets / Yard Notes</label>
+      <input id="editPets"
+        value="${escapeHtml(client.pets || "")}">
+
+      <label>Notes</label>
+      <textarea id="editNotes">${escapeHtml(client.notes || "")}</textarea>
+
+      <button onclick="updateClient('${client.id}')">
+        Save Changes
+      </button>
+
+      <button class="secondary"
+        onclick="showClientProfile('${client.id}')">
+        Cancel
+      </button>
+
+      <div id="editMessage" class="message"></div>
+    </div>
+  `;
+}
+
+
+async function updateClient(clientId) {
+  const message =
+    document.getElementById("editMessage");
+
+  const firstName =
+    document.getElementById("editFirstName").value.trim();
+
+  const lastName =
+    document.getElementById("editLastName").value.trim();
+
+  if (!firstName || !lastName) {
+    message.textContent =
+      "First and last name are required.";
+    return;
+  }
+
+  message.textContent = "Saving changes...";
+
+  const acreage =
+    document.getElementById("editAcreage").value;
+
+  const price =
+    document.getElementById("editDefaultPrice").value;
+
+  const updates = {
+    first_name: firstName,
+    last_name: lastName,
+    phone:
+      document.getElementById("editPhone").value.trim() || null,
+    email:
+      document.getElementById("editEmail").value.trim() || null,
+    address:
+      document.getElementById("editAddress").value.trim() || null,
+    state:
+      document.getElementById("editState").value.trim() || null,
+    zip_code:
+      document.getElementById("editZipCode").value.trim() || null,
+    acreage: acreage ? Number(acreage) : null,
+    yard_difficulty:
+      document.getElementById("editYardDifficulty").value || null,
+    preferred_day:
+      document.getElementById("editPreferredDay").value || null,
+    frequency:
+      document.getElementById("editFrequency").value || null,
+    default_price: price ? Number(price) : null,
+    gate_code:
+      document.getElementById("editGateCode").value.trim() || null,
+    pets:
+      document.getElementById("editPets").value.trim() || null,
+    notes:
+      document.getElementById("editNotes").value.trim() || null
+  };
+
+  const { error } =
+    await supabaseClient
+      .from("clients")
+      .update(updates)
+      .eq("id", clientId);
+
+  if (error) {
+    console.error(error);
+    message.textContent =
+      "Could not update client: " + error.message;
+    return;
+  }
+
+  message.textContent = "Changes saved.";
+
+  setTimeout(() => {
+    showClientProfile(clientId);
+  }, 400);
+}
+
+
+function buildDayOptions(current) {
+  const days = [
+    "",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+  ];
+
+  return days.map(day => {
+    const label = day || "No preference";
+    const selected = day === current ? "selected" : "";
+
+    return `<option value="${day}" ${selected}>
+      ${label}
+    </option>`;
+  }).join("");
+}
+
+
+function buildFrequencyOptions(current) {
+  const frequencies = [
+    "",
+    "Weekly",
+    "Biweekly",
+    "Monthly",
+    "One Time"
+  ];
+
+  return frequencies.map(frequency => {
+    const label = frequency || "Select";
+    const selected =
+      frequency === current ? "selected" : "";
+
+    return `<option value="${frequency}" ${selected}>
+      ${label}
+    </option>`;
+  }).join("");
+}
   async function returnToDashboard() {
     const {
       data: { user }
