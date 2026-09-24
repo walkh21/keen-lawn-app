@@ -1740,6 +1740,33 @@ async function showEditJob(jobId) {
         id="editJobNotes"
         placeholder="Job notes">${escapeHtml(job.notes || "")}</textarea>
 
+${
+  job.recurrence_id
+    ? `
+      <label>Apply Changes To</label>
+      <select id="editJobScope">
+        <option value="single">
+          This Job Only
+        </option>
+        <option value="future">
+          This and Future Jobs
+        </option>
+      </select>
+
+      <div class="client-detail"
+        style="margin-top:8px;">
+        This job is part of a recurring ${
+          escapeHtml(
+            job.recurrence_type === "biweekly"
+              ? "Every 2 Weeks"
+              : job.recurrence_type
+          )
+        } service.
+      </div>
+    `
+    : ""
+}
+
       <button onclick="updateJob('${job.id}', '${job.client_id}')">
         Save Changes
       </button>
