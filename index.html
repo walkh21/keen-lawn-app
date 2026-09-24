@@ -538,7 +538,7 @@
       ].filter(Boolean);
 
       return `
-        <div class="client">
+        <div class="client" onclick="showClientProfile('${client.id}')" style="cursor:pointer;">
           <div class="client-name">
             ${escapeHtml(name)}
           </div>
@@ -552,7 +552,121 @@
       `;
     }).join("");
   }
+async function showClientProfile(clientId) {
+  app.innerHTML = `
+    <div class="card">
+      <h2>Client Profile</h2>
+      <p>Loading client...</p>
+    </div>
+  `;
 
+  const { data: client, error } =
+    await supabaseClient
+      .from("clients")
+      .select("*")
+      .eq("id", clientId)
+      .single();
+
+  if (error || !client) {
+    app.innerHTML = `
+      <div class="card">
+        <h2>Client Profile</h2>
+        <p>
+          Could not load client:
+          ${escapeHtml(error?.message || "Client not found")}
+        </p>
+
+        <button onclick="returnToDashboard()">
+          Back to Clients
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const fullName =
+    `${client.first_name || ""} ${client.last_name || ""}`.trim();
+
+  const price =
+    client.default_price != null
+      ? `$${Number(client.default_price).toFixed(2)}`
+      : "Not set";
+
+  app.innerHTML = `
+    <div class="card">
+
+      <h2>${escapeHtml(fullName)}</h2>
+
+      <p>
+        <strong>Phone</strong><br>
+        ${escapeHtml(client.phone || "Not provided")}
+      </p>
+
+      <p>
+        <strong>Email</strong><br>
+        ${escapeHtml(client.email || "Not provided")}
+      </p>
+
+      <p>
+        <strong>Address</strong><br>
+        ${escapeHtml(client.address || "Not provided")}
+        ${client.state ? `<br>${escapeHtml(client.state)}` : ""}
+        ${client.zip_code ? ` ${escapeHtml(client.zip_code)}` : ""}
+      </p>
+
+      <p>
+        <strong>Acreage</strong><br>
+        ${escapeHtml(client.acreage ?? "Not set")}
+      </p>
+
+      <p>
+        <strong>Yard Difficulty</strong><br>
+        ${escapeHtml(client.yard_difficulty || "Not set")}
+      </p>
+
+      <p>
+        <strong>Preferred Service Day</strong><br>
+        ${escapeHtml(client.preferred_day || "No preference")}
+      </p>
+
+      <p>
+        <strong>Service Frequency</strong><br>
+        ${escapeHtml(client.frequency || "Not set")}
+      </p>
+
+      <p>
+        <strong>Default Price</strong><br>
+        ${escapeHtml(price)}
+      </p>
+
+      <p>
+        <strong>Gate Code</strong><br>
+        ${escapeHtml(client.gate_code || "None")}
+      </p>
+
+      <p>
+        <strong>Pets / Yard Notes</strong><br>
+        ${escapeHtml(client.pets || "None")}
+      </p>
+
+      <p>
+        <strong>Notes</strong><br>
+        ${escapeHtml(client.notes || "None")}
+      </p>
+
+      <button onclick="showEditClient('${client.id}')">
+        Edit Client
+      </button>
+
+      <button
+        class="secondary"
+        onclick="returnToDashboard()">
+        Back to Clients
+      </button>
+
+    </div>
+  `;
+}
   async function returnToDashboard() {
     const {
       data: { user }
