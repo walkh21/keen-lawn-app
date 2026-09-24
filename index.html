@@ -1469,10 +1469,25 @@ async function showAddJob(clientId) {
 
 <label>Repeat Service</label>
 <select id="jobRecurrence">
-  <option value="none">One Time</option>
-  <option value="weekly">Weekly</option>
-  <option value="biweekly">Every 2 Weeks</option>
-  <option value="monthly">Monthly</option>
+  <option value="none"
+    ${!client.frequency || client.frequency === "One Time" ? "selected" : ""}>
+    One Time
+  </option>
+
+  <option value="weekly"
+    ${client.frequency === "Weekly" ? "selected" : ""}>
+    Weekly
+  </option>
+
+  <option value="biweekly"
+    ${client.frequency === "Biweekly" ? "selected" : ""}>
+    Every 2 Weeks
+  </option>
+
+  <option value="monthly"
+    ${client.frequency === "Monthly" ? "selected" : ""}>
+    Monthly
+  </option>
 </select>
 
       <label>Job Notes</label>
