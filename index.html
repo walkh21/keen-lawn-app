@@ -433,7 +433,9 @@ async function loadBusinessSummary() {
   const { data: jobs, error } =
     await supabaseClient
       .from("jobs")
-      .select("price, payment_status, status");
+      .select(
+  "price, payment_status, status, scheduled_date"
+);
 
   if (error) {
     console.error(error);
@@ -476,7 +478,7 @@ async function loadBusinessSummary() {
 const { data: expenses, error: expenseError } =
   await supabaseClient
     .from("expenses")
-    .select("amount");
+    .select("amount, expense_date");
 
 if (expenseError) {
   console.error(expenseError);
@@ -491,8 +493,75 @@ const totalExpenses =
 
 const netIncome =
   totalRevenue - totalExpenses;
+
+const now = new Date();
+
+const currentYear =
+  now.getFullYear();
+
+const currentMonth =
+  now.getMonth() + 1;
+
+const isCurrentMonth = dateValue => {
+  if (!dateValue) return false;
+
+  const [year, month] =
+    dateValue.split("-").map(Number);
+
+  return (
+    year === currentYear &&
+    month === currentMonth
+  );
+};
+
+const monthlyRevenue = allJobs
+  .filter(job =>
+    job.payment_status === "Paid" &&
+    isCurrentMonth(job.scheduled_date)
+  )
+  .reduce(
+    (total, job) =>
+      total + Number(job.price || 0),
+    0
+  );
+
+const monthlyExpenses =
+  (expenses || [])
+    .filter(expense =>
+      isCurrentMonth(expense.expense_date)
+    )
+    .reduce(
+      (total, expense) =>
+        total + Number(expense.amount || 0),
+      0
+    );
+
+const monthlyNetIncome =
+  monthlyRevenue - monthlyExpenses;
   
   summary.innerHTML = `
+  <div style="
+  margin-bottom:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid #e4e9e6;
+">
+  <strong>This Month</strong>
+
+  <div class="client-detail">
+    Revenue:
+    $${monthlyRevenue.toFixed(2)}
+  </div>
+
+  <div class="client-detail">
+    Expenses:
+    $${monthlyExpenses.toFixed(2)}
+  </div>
+
+  <div class="client-detail">
+    Net Income:
+    $${monthlyNetIncome.toFixed(2)}
+  </div>
+</div>
     <div class="client-detail">
   <strong>Revenue Collected:</strong>
   $${totalRevenue.toFixed(2)}
