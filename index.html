@@ -473,21 +473,50 @@ async function loadBusinessSummary() {
       job => job.status === "Complete"
     ).length;
 
+const { data: expenses, error: expenseError } =
+  await supabaseClient
+    .from("expenses")
+    .select("amount");
+
+if (expenseError) {
+  console.error(expenseError);
+}
+
+const totalExpenses =
+  (expenses || []).reduce(
+    (total, expense) =>
+      total + Number(expense.amount || 0),
+    0
+  );
+
+const netIncome =
+  totalRevenue - totalExpenses;
+  
   summary.innerHTML = `
     <div class="client-detail">
-      <strong>Revenue Collected:</strong>
-      $${totalRevenue.toFixed(2)}
-    </div>
+  <strong>Revenue Collected:</strong>
+  $${totalRevenue.toFixed(2)}
+</div>
 
-    <div class="client-detail">
-      <strong>Outstanding:</strong>
-      $${unpaidRevenue.toFixed(2)}
-    </div>
+<div class="client-detail">
+  <strong>Expenses:</strong>
+  $${totalExpenses.toFixed(2)}
+</div>
 
-    <div class="client-detail">
-      <strong>Completed Jobs:</strong>
-      ${completedJobs}
-    </div>
+<div class="client-detail">
+  <strong>Net Income:</strong>
+  $${netIncome.toFixed(2)}
+</div>
+
+<div class="client-detail">
+  <strong>Outstanding:</strong>
+  $${unpaidRevenue.toFixed(2)}
+</div>
+
+<div class="client-detail">
+  <strong>Completed Jobs:</strong>
+  ${completedJobs}
+</div>
   `;
 }
   
