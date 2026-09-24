@@ -686,6 +686,9 @@ async function showClientProfile(clientId) {
 </div>
 
       <button onclick="showEditClient('${client.id}')">
+        <button onclick="showAddJob('${client.id}')">
+  + Add Job
+</button>
         Edit Client
       </button>
       
@@ -882,6 +885,142 @@ async function loadPropertyPhotos(clientId) {
   list.innerHTML =
     photoCards.filter(Boolean).join("");
 }
+
+async function showAddJob(clientId) {
+  const { data: client, error } =
+    await supabaseClient
+      .from("clients")
+      .select("*")
+      .eq("id", clientId)
+      .single();
+
+  if (error || !client) {
+    alert("Could not load client.");
+    return;
+  }
+
+  const fullName =
+    `${client.first_name || ""} ${client.last_name || ""}`.trim();
+
+  app.innerHTML = `
+    <div class="card">
+      <h2>Add Job</h2>
+      <p>
+        <strong>${escapeHtml(fullName)}</strong>
+      </p>
+
+      <label>Service Date</label>
+      <input id="jobDate" type="date">
+
+      <label>Service Time</label>
+      <input id="jobTime" type="time">
+
+      <label>Price</label>
+      <input
+        id="jobPrice"
+        type="number"
+        step="0.01"
+        min="0"
+        value="${client.default_price ?? ""}">
+
+      <label>Status</label>
+      <select id="jobStatus">
+        <option value="scheduled">Scheduled</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+
+      <label>Payment Status</label>
+      <select id="jobPaymentStatus">
+        <option value="unpaid">Unpaid</option>
+        <option value="paid">Paid</option>
+      </select>
+
+      <label>Job Notes</label>
+      <textarea
+        id="jobNotes"
+        placeholder="Gate instructions, service details, special requests..."></textarea>
+
+      <button onclick="saveJob('${client.id}')">
+        Save Job
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showClientProfile('${client.id}')">
+        Cancel
+      </button>
+
+      <div id="jobMessage" class="message"></div>
+    </div>
+  `;
+}
+async function saveJob(clientId) {
+  const message =
+    document.getElementById("jobMessage");
+
+  const scheduledDate =
+    document.getElementById("jobDate").value;
+
+  const scheduledTime =
+    document.getElementById("jobTime").value;
+
+  const price =
+    document.getElementById("jobPrice").value;
+
+  const status =
+    document.getElementById("jobStatus").value;
+
+  const paymentStatus =
+    document.getElementById("jobPaymentStatus").value;
+
+  const notes =
+    document.getElementById("jobNotes").value.trim();
+
+  if (!scheduledDate) {
+    message.textContent =
+      "Please select a service date.";
+    return;
+  }
+
+  message.textContent = "Saving job...";
+
+  const {
+    data: { user }
+  } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    message.textContent =
+      "You must be logged in.";
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("jobs")
+      .insert({
+        user_id: user.id,
+        client_id: clientId,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime || null,
+        status: status,
+        price: price ? Number(price) : null,
+        payment_status: paymentStatus,
+        notes: notes || null
+      });
+
+  if (error) {
+    console.error(error);
+    message.textContent =
+      `Could not save job: ${error.message}`;
+    return;
+  }
+
+  message.textContent = "Job saved.";
+
+  await showClientProfile(clientId);
+}
+  
   async function deactivateClient(clientId) {
   const confirmed = confirm(
     "Deactivate this client? They will be removed from your active client list, but their information will remain saved."
