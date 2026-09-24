@@ -1859,13 +1859,11 @@ if (scope === "future") {
     const result =
       await supabaseClient
         .from("jobs")
-        .update({
-          scheduled_time: updates.scheduled_time,
-          price: updates.price,
-          status: updates.status,
-          payment_status: updates.payment_status,
-          notes: updates.notes
-        })
+       .update({
+  scheduled_time: updates.scheduled_time,
+  price: updates.price,
+  notes: updates.notes
+})
         .eq("recurrence_id", currentJob.recurrence_id)
         .gte(
           "scheduled_date",
