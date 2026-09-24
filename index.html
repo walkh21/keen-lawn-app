@@ -261,6 +261,14 @@
         </button>
       </div>
 
+<div class="card">
+  <h2>Schedule</h2>
+
+  <button onclick="showSchedule()">
+    View Schedule
+  </button>
+</div>
+
       <div class="card">
         <h2>Clients</h2>
 
@@ -558,7 +566,148 @@
       `;
     }).join("");
   }
-async function showClientProfile(clientId) {
+
+  async function showSchedule() {
+  app.innerHTML = `
+    <div class="card">
+      <h2>Schedule</h2>
+      <p>Loading scheduled jobs...</p>
+    </div>
+  `;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select(`
+        *,
+        clients (
+          first_name,
+          last_name,
+          address,
+          phone
+        )
+      `)
+      .order("scheduled_date", {
+        ascending: true
+      })
+      .order("scheduled_time", {
+        ascending: true
+      });
+
+  if (error) {
+    app.innerHTML = `
+      <div class="card">
+        <h2>Schedule</h2>
+
+        <p>
+          Could not load schedule:
+          ${escapeHtml(error.message)}
+        </p>
+
+        <button
+          class="secondary"
+          onclick="returnToDashboard()">
+          Back to Dashboard
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const jobCards =
+    !jobs || jobs.length === 0
+      ? `
+        <p class="empty">
+          No jobs scheduled yet.
+        </p>
+      `
+      : jobs.map(job => {
+          const client = job.clients || {};
+
+          const clientName =
+            `${client.first_name || ""}
+             ${client.last_name || ""}`.trim()
+            || "Unknown Client";
+
+          const time =
+            job.scheduled_time
+              ? job.scheduled_time.slice(0, 5)
+              : "No time";
+
+          const price =
+            job.price != null
+              ? `$${Number(job.price).toFixed(2)}`
+              : "No price";
+
+          return `
+            <div
+              class="client"
+              style="margin-bottom:12px;">
+
+              <div class="client-name">
+                ${escapeHtml(job.scheduled_date)}
+                •
+                ${escapeHtml(time)}
+              </div>
+
+              <div class="client-detail">
+                <strong>
+                  ${escapeHtml(clientName)}
+                </strong>
+              </div>
+
+              ${
+                client.address
+                  ? `
+                    <div class="client-detail">
+                      ${escapeHtml(client.address)}
+                    </div>
+                  `
+                  : ""
+              }
+
+              <div class="client-detail">
+                ${escapeHtml(price)}
+                • ${escapeHtml(job.status)}
+                • ${escapeHtml(job.payment_status)}
+              </div>
+
+              <button
+                class="secondary"
+                onclick="showEditJob(
+                  '${job.id}',
+                  '${job.client_id}'
+                )"
+                style="margin-top:10px;">
+                Manage Job
+              </button>
+
+            </div>
+          `;
+        }).join("");
+
+  app.innerHTML = `
+    <div class="dashboard-top">
+      <div>
+        <strong>Keen Lawn Schedule</strong>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="returnToDashboard()">
+        Dashboard
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Upcoming Jobs</h2>
+
+      ${jobCards}
+    </div>
+  `;
+}
+  
+  async function showClientProfile(clientId) {
   app.innerHTML = `
     <div class="card">
       <h2>Client Profile</h2>
