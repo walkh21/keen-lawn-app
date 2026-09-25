@@ -2127,6 +2127,91 @@ await loadClientJobs(client.id);
 await loadPropertyPhotos(client.id);
 }
 
+async function compressPropertyPhoto(file) {
+  const MAX_SIZE = 1600;
+  const QUALITY = 0.8;
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(
+        new Error("Could not read photo.")
+      );
+    };
+
+    reader.onload = event => {
+      const image = new Image();
+
+      image.onerror = () => {
+        reject(
+          new Error("Could not process photo.")
+        );
+      };
+
+      image.onload = () => {
+        let width = image.width;
+        let height = image.height;
+
+        if (
+          width > MAX_SIZE ||
+          height > MAX_SIZE
+        ) {
+          const scale =
+            Math.min(
+              MAX_SIZE / width,
+              MAX_SIZE / height
+            );
+
+          width =
+            Math.round(width * scale);
+
+          height =
+            Math.round(height * scale);
+        }
+
+        const canvas =
+          document.createElement("canvas");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const context =
+          canvas.getContext("2d");
+
+        context.drawImage(
+          image,
+          0,
+          0,
+          width,
+          height
+        );
+
+        canvas.toBlob(
+          blob => {
+            if (!blob) {
+              reject(
+                new Error(
+                  "Could not compress photo."
+                )
+              );
+              return;
+            }
+
+            resolve(blob);
+          },
+          "image/jpeg",
+          QUALITY
+        );
+      };
+
+      image.src = event.target.result;
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+  
 async function uploadPropertyPhoto(clientId) {
   const fileInput =
     document.getElementById("propertyPhoto");
@@ -2145,32 +2230,49 @@ async function uploadPropertyPhoto(clientId) {
     return;
   }
 
-  message.textContent = "Uploading photo...";
+  message.textContent =
+  "Optimizing photo...";
 
-  const {
-    data: { user },
-    error: userError
-  } = await supabaseClient.auth.getUser();
+let optimizedPhoto;
 
+try {
+  optimizedPhoto =
+    await compressPropertyPhoto(file);
+} catch (error) {
+  console.error(error);
+
+  message.textContent =
+    "Could not process photo: " +
+    error.message;
+
+  return;
+}
+
+message.textContent =
+  "Uploading photo...";
+
+const {
+  data: { user },
+  error: userError
+} = await supabaseClient.auth.getUser();
   if (userError || !user) {
     message.textContent =
       "Your login session could not be verified.";
     return;
   }
 
-  const extension =
-    file.name.split(".").pop() || "jpg";
-
   const fileName =
-    `${Date.now()}-${crypto.randomUUID()}.${extension}`;
-
+  `${Date.now()}-${crypto.randomUUID()}.jpg`;
+  
   const storagePath =
     `${user.id}/${clientId}/${fileName}`;
 
   const { error: uploadError } =
     await supabaseClient.storage
       .from("property-photos")
-      .upload(storagePath, file);
+      .upload(storagePath, optimizedPhoto, {
+  contentType: "image/jpeg"
+});
 
   if (uploadError) {
     console.error(uploadError);
