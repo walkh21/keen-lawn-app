@@ -1871,7 +1871,7 @@ ${stops}
 
 <hr style="margin:24px 0;border:0;border-top:1px solid #ddd;">
 
-<h3>Scheduled Jobs</h3>
+<h3>Upcoming Jobs</h3>
 
 <div id="clientJobList">
   <p class="empty">Loading jobs...</p>
@@ -2159,18 +2159,36 @@ async function deletePropertyPhoto(
   await loadPropertyPhotos(clientId);
 }
   
-async function loadClientJobs(clientId) {
+async function loadClientJobs(
+  clientId,
+  showAll = false
+) {
   const list =
     document.getElementById("clientJobList");
 
   if (!list) return;
+
+  const today = new Date();
+
+  const todayString =
+    `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
 
   const { data: jobs, error } =
     await supabaseClient
       .from("jobs")
       .select("*")
       .eq("client_id", clientId)
+      .gte("scheduled_date", todayString)
+      .neq("status", "Complete")
+      .neq("status", "Cancelled")
       .order("scheduled_date", {
+        ascending: true
+      })
+      .order("scheduled_time", {
         ascending: true
       });
 
@@ -2187,7 +2205,209 @@ async function loadClientJobs(clientId) {
   if (!jobs || jobs.length === 0) {
     list.innerHTML = `
       <p class="empty">
-        No jobs scheduled yet.
+        No upcoming jobs scheduled.
+      </p>
+
+      <button
+        class="secondary"
+        onclick="showJobHistory('${clientId}')">
+        View Job History
+      </button>
+    `;
+    return;
+  }
+
+  const jobsToDisplay =
+    showAll
+      ? jobs
+      : jobs.slice(0, 3);
+
+  const jobCards = jobsToDisplay.map(job => {
+    const price =
+      job.price != null
+        ? `$${Number(job.price).toFixed(2)}`
+        : "No price";
+
+    const time =
+      job.scheduled_time
+        ? job.scheduled_time.slice(0, 5)
+        : "No time";
+
+    const recurrenceLabel =
+      job.recurrence_type
+        ? job.recurrence_type === "biweekly"
+          ? "Every 2 Weeks"
+          : job.recurrence_type
+              .charAt(0)
+              .toUpperCase() +
+            job.recurrence_type.slice(1)
+        : null;
+
+    return `
+      <div class="client"
+        style="margin-bottom:12px;">
+
+        <div class="client-name">
+          ${escapeHtml(job.scheduled_date)}
+        </div>
+
+        <div class="client-detail">
+          ${escapeHtml(time)}
+          • ${escapeHtml(price)}
+          • ${escapeHtml(
+            job.status || "Scheduled"
+          )}
+          • ${escapeHtml(
+            job.payment_status || "Unpaid"
+          )}
+        </div>
+
+        ${
+          recurrenceLabel
+            ? `
+              <div class="client-detail">
+                ↻ Recurring:
+                ${escapeHtml(recurrenceLabel)}
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          job.notes
+            ? `
+              <div class="client-detail">
+                ${escapeHtml(job.notes)}
+              </div>
+            `
+            : ""
+        }
+
+        <button
+          class="secondary"
+          onclick="showEditJob(
+            '${job.id}',
+            '${clientId}'
+          )"
+          style="margin-top:12px;">
+          Manage Job
+        </button>
+
+      </div>
+    `;
+  }).join("");
+
+  let controls = "";
+
+  if (jobs.length > 3) {
+    if (showAll) {
+      controls += `
+        <button
+          class="secondary"
+          onclick="loadClientJobs(
+            '${clientId}',
+            false
+          )">
+          Show Next 3 Jobs
+        </button>
+      `;
+    } else {
+      controls += `
+        <button
+          class="secondary"
+          onclick="loadClientJobs(
+            '${clientId}',
+            true
+          )">
+          View All Upcoming Jobs
+          (${jobs.length})
+        </button>
+      `;
+    }
+  }
+
+  controls += `
+    <button
+      class="secondary"
+      onclick="showJobHistory('${clientId}')">
+      View Job History
+    </button>
+  `;
+
+  list.innerHTML =
+    jobCards + controls;
+}  
+
+async function showJobHistory(clientId) {
+  app.innerHTML = `
+    <div class="dashboard-top">
+      <div>
+        <strong>Job History</strong>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="showClientProfile('${clientId}')">
+        Client
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Job History</h2>
+
+      <div id="jobHistoryList">
+        <p class="empty">
+          Loading job history...
+        </p>
+      </div>
+    </div>
+  `;
+
+  const today = new Date();
+
+  const todayString =
+    `${today.getFullYear()}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      today.getDate()
+    ).padStart(2, "0")}`;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select("*")
+      .eq("client_id", clientId)
+      .or(
+        `scheduled_date.lt.${todayString},status.eq.Complete,status.eq.Cancelled`
+      )
+      .order("scheduled_date", {
+        ascending: false
+      })
+      .order("scheduled_time", {
+        ascending: false
+      });
+
+  const list =
+    document.getElementById(
+      "jobHistoryList"
+    );
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <p class="empty">
+        Could not load job history:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No job history yet.
       </p>
     `;
     return;
@@ -2204,16 +2424,9 @@ async function loadClientJobs(clientId) {
         ? job.scheduled_time.slice(0, 5)
         : "No time";
 
-const recurrenceLabel =
-  job.recurrence_type
-    ? job.recurrence_type === "biweekly"
-      ? "Every 2 Weeks"
-      : job.recurrence_type.charAt(0).toUpperCase() +
-        job.recurrence_type.slice(1)
-    : null;
-    
     return `
-      <div class="client" style="margin-bottom:12px;">
+      <div class="client">
+
         <div class="client-name">
           ${escapeHtml(job.scheduled_date)}
         </div>
@@ -2221,36 +2434,38 @@ const recurrenceLabel =
         <div class="client-detail">
           ${escapeHtml(time)}
           • ${escapeHtml(price)}
-          • ${escapeHtml(job.status)}
-          • ${escapeHtml(job.payment_status)}
+          • ${escapeHtml(
+            job.status || "Scheduled"
+          )}
+          • ${escapeHtml(
+            job.payment_status || "Unpaid"
+          )}
         </div>
-
-${
-  recurrenceLabel
-    ? `<div class="client-detail">
-         ↻ Recurring: ${escapeHtml(recurrenceLabel)}
-       </div>`
-    : ""
-}
 
         ${
           job.notes
-            ? `<div class="client-detail">
-                 ${escapeHtml(job.notes)}
-               </div>`
+            ? `
+              <div class="client-detail">
+                ${escapeHtml(job.notes)}
+              </div>
+            `
             : ""
         }
+
         <button
-  class="secondary"
-  onclick="showEditJob('${job.id}', '${clientId}')"
-  style="margin-top:12px;">
-  Manage Job
-</button>
+          class="secondary"
+          onclick="showEditJob(
+            '${job.id}',
+            '${clientId}'
+          )"
+          style="margin-top:10px;">
+          Manage Job
+        </button>
+
       </div>
     `;
   }).join("");
 }
-
   
 async function showAddJob(clientId) {
   const { data: client, error } =
