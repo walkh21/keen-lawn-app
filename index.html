@@ -1295,16 +1295,10 @@ const monthlyNetIncome =
 
 async function showOutstandingPayments() {
   app.innerHTML = `
-    <div class="dashboard-top">
-      <div>
-        <strong>Outstanding Payments</strong>
-      </div>
+    ${buildAppNav("dashboard")}
 
-      <button
-        class="secondary"
-        onclick="goToDashboard()">
-        Dashboard
-      </button>
+    <div class="page-heading">
+      <h2>Outstanding Payments</h2>
     </div>
 
     <div class="card">
@@ -1774,20 +1768,13 @@ async function showEditExpense(expenseId) {
   }
 
   app.innerHTML = `
-    <div class="dashboard-top">
-      <div>
-        <strong>Edit Expense</strong>
-      </div>
+    ${buildAppNav("expenses")}
 
-      <button
-        class="secondary"
-        onclick="showExpenses()">
-        Expenses
-      </button>
+    <div class="page-heading">
+      <h2>Edit Expense</h2>
     </div>
 
     <div class="card">
-      <h2>Edit Expense</h2>
 
       <label>Date</label>
       <input
