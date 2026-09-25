@@ -2121,7 +2121,14 @@ ${stops}
   Deactivate Client
 </button>
 
-      <button
+<button
+  class="secondary"
+  onclick="deleteClientPermanently('${client.id}')"
+  style="color:#a12622;">
+  Delete Client Permanently
+</button>
+
+<button
   class="secondary"
   onclick="goToDashboard()">
   Dashboard
@@ -3455,6 +3462,122 @@ async function cancelFutureJobs(jobId, clientId) {
   }
 
   await showClientProfile(clientId);
+}
+
+async function deleteClientPermanently(clientId) {
+  const firstConfirmation = confirm(
+    "Permanently delete this client and all of their jobs and property photos? This cannot be undone."
+  );
+
+  if (!firstConfirmation) return;
+
+  const secondConfirmation = confirm(
+    "Are you sure? All records for this client will be permanently deleted."
+  );
+
+  if (!secondConfirmation) return;
+
+  // Get the client's photo records first
+  // so the actual files can also be removed
+  // from Supabase Storage.
+  const {
+    data: photos,
+    error: photoLoadError
+  } = await supabaseClient
+    .from("property_photos")
+    .select("photo_url")
+    .eq("client_id", clientId);
+
+  if (photoLoadError) {
+    console.error(photoLoadError);
+
+    alert(
+      "Could not verify the client's photos. Nothing was deleted."
+    );
+
+    return;
+  }
+
+  // Remove property photos from Storage.
+  if (photos && photos.length > 0) {
+    const photoPaths =
+      photos
+        .map(photo => photo.photo_url)
+        .filter(Boolean);
+
+    if (photoPaths.length > 0) {
+      const { error: storageError } =
+        await supabaseClient.storage
+          .from("property-photos")
+          .remove(photoPaths);
+
+      if (storageError) {
+        console.error(storageError);
+
+        alert(
+          "Could not delete the client's stored photos. Client deletion was stopped."
+        );
+
+        return;
+      }
+    }
+  }
+
+  // Delete property photo database records.
+  const { error: photoDeleteError } =
+    await supabaseClient
+      .from("property_photos")
+      .delete()
+      .eq("client_id", clientId);
+
+  if (photoDeleteError) {
+    console.error(photoDeleteError);
+
+    alert(
+      "Could not delete the client's photo records. Client deletion was stopped."
+    );
+
+    return;
+  }
+
+  // Delete every job belonging to this client.
+  const { error: jobDeleteError } =
+    await supabaseClient
+      .from("jobs")
+      .delete()
+      .eq("client_id", clientId);
+
+  if (jobDeleteError) {
+    console.error(jobDeleteError);
+
+    alert(
+      "Could not delete the client's jobs. Client deletion was stopped."
+    );
+
+    return;
+  }
+
+  // Finally delete the client.
+  const { error: clientDeleteError } =
+    await supabaseClient
+      .from("clients")
+      .delete()
+      .eq("id", clientId);
+
+  if (clientDeleteError) {
+    console.error(clientDeleteError);
+
+    alert(
+      "The client's related records were removed, but the client could not be deleted: " +
+      clientDeleteError.message
+    );
+
+    return;
+  }
+
+  alert("Client permanently deleted.");
+
+  await goToDashboard();
 }
   
   async function deactivateClient(clientId) {
