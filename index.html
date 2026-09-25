@@ -1989,9 +1989,48 @@ async function deleteExpense(expenseId) {
   
   function showAddClient() {
     app.innerHTML = `
-      <div class="card">
+      <div class="app-nav">
+  <button
+    class="nav-item"
+    onclick="goToDashboard()">
+    Dashboard
+  </button>
 
-        <h2>Add Client</h2>
+  <button
+    class="nav-item"
+    onclick="showClientsPage()">
+    Clients
+  </button>
+
+  <button
+    class="nav-item active">
+    Add Client
+  </button>
+
+  <button
+    class="nav-item"
+    onclick="showSchedule()">
+    Scheduler
+  </button>
+
+  <button
+    class="nav-item"
+    onclick="showTodayRoute()">
+    Today's Route
+  </button>
+
+  <button
+    class="nav-item"
+    onclick="showExpenses()">
+    Expenses
+  </button>
+</div>
+
+<div class="page-heading">
+  <h2>Add Client</h2>
+</div>
+
+<div class="card">
 
         <label>First Name *</label>
         <input id="firstName"
@@ -2084,9 +2123,9 @@ async function deleteExpense(expenseId) {
         </button>
 
         <button class="secondary"
-          onclick="returnToDashboard()">
-          Cancel
-        </button>
+  onclick="showClientsPage()">
+  Cancel
+</button>
 
         <div id="saveMessage"
           class="message"></div>
