@@ -2930,7 +2930,7 @@ if (recurrence === "monthly") {
 }
 
 for (let i = 0; i < totalJobs; i++) {
-  const jobDate = new Date(firstDate);
+  let jobDate = new Date(firstDate);
 
   if (recurrence === "weekly") {
     jobDate.setDate(
@@ -2945,11 +2945,12 @@ for (let i = 0; i < totalJobs; i++) {
   }
 
   if (recurrence === "monthly") {
-    jobDate.setMonth(
-      firstDate.getMonth() + i
-    );
+    jobDate =
+      getMonthlyServiceDate(
+        firstDate,
+        i
+      );
   }
-
   const formattedDate =
   `${jobDate.getFullYear()}-${String(
     jobDate.getMonth() + 1
