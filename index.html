@@ -3838,11 +3838,16 @@ async function showAddJob(clientId) {
     `${client.first_name || ""} ${client.last_name || ""}`.trim();
 
   app.innerHTML = `
-    <div class="card">
-      <h2>Add Job</h2>
-      <p>
-        <strong>${escapeHtml(fullName)}</strong>
-      </p>
+  ${buildAppNav("clients")}
+
+  <div class="page-heading">
+    <h2>Add Job</h2>
+  </div>
+
+  <div class="card">
+    <p>
+      <strong>${escapeHtml(fullName)}</strong>
+    </p>
 
       <label>Service Date</label>
       <input id="jobDate" type="date">
