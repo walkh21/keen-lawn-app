@@ -4657,8 +4657,13 @@ async function deleteClientPermanently(clientId) {
   }
 
   app.innerHTML = `
-    <div class="card">
+    ${buildAppNav("clients")}
+
+    <div class="page-heading">
       <h2>Edit Client</h2>
+    </div>
+
+    <div class="card">
 
       <label>First Name *</label>
       <input id="editFirstName"
