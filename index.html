@@ -4876,8 +4876,13 @@ function buildFrequencyOptions(current) {
 
 async function showInactiveClients() {
   app.innerHTML = `
-    <div class="card">
+    ${buildAppNav("clients")}
+
+    <div class="page-heading">
       <h2>Inactive Clients</h2>
+    </div>
+
+    <div class="card">
 
       <div id="inactiveClientList">
         <p class="empty">Loading inactive clients...</p>
