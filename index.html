@@ -1540,7 +1540,8 @@ async function loadTodayJobs() {
 }
 
 async function showExpenses() {
-  <div class="app-nav">
+  app.innerHTML = `
+    <div class="app-nav">
   <button
     class="nav-item"
     onclick="goToDashboard()">
