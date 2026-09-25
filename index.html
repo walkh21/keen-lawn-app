@@ -626,6 +626,48 @@
     startApp();
   }
 
+function buildAppNav(activePage = "") {
+  return `
+    <div class="app-nav">
+      <button
+        class="nav-item ${activePage === "dashboard" ? "active" : ""}"
+        onclick="goToDashboard()">
+        Dashboard
+      </button>
+
+      <button
+        class="nav-item ${activePage === "clients" ? "active" : ""}"
+        onclick="showClientsPage()">
+        Clients
+      </button>
+
+      <button
+        class="nav-item ${activePage === "add-client" ? "active" : ""}"
+        onclick="showAddClient()">
+        Add Client
+      </button>
+
+      <button
+        class="nav-item ${activePage === "scheduler" ? "active" : ""}"
+        onclick="showSchedule()">
+        Scheduler
+      </button>
+
+      <button
+        class="nav-item ${activePage === "today" ? "active" : ""}"
+        onclick="showTodayRoute()">
+        Today's Route
+      </button>
+
+      <button
+        class="nav-item ${activePage === "expenses" ? "active" : ""}"
+        onclick="showExpenses()">
+        Expenses
+      </button>
+    </div>
+  `;
+}
+  
   async function logout() {
     await supabaseClient.auth.signOut();
     showLogin();
