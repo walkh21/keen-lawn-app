@@ -373,6 +373,163 @@
       font-size: 13px;
     }
   }
+
+/* =========================================
+   KEEN LAWN ORIGINAL DASHBOARD LAYOUT
+   ========================================= */
+
+.app-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  background: var(--navy);
+  margin: -20px -20px 22px;
+  padding: 12px 14px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.app-nav .nav-item {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: max-content;
+  min-height: 54px;
+  margin: 0;
+  padding: 0 17px;
+  border-radius: 11px;
+  background: transparent;
+  color: #e8f0f5;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.app-nav .nav-item:hover {
+  background: var(--navy-light);
+}
+
+.app-nav .nav-item.active {
+  background: var(--navy-light);
+  color: white;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.page-heading h2 {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.page-heading .add-client-button {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.metric-card {
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.metric-label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+}
+
+.metric-number {
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.card-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-heading-row h2 {
+  margin: 0;
+}
+
+.small-secondary {
+  width: auto;
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 14px;
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+}
+
+.dashboard-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px 30px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.logout-button {
+  width: auto;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 13px;
+  background: var(--blue-soft);
+  color: var(--blue-dark);
+}
+
+/* Match the wider original Keen Lawn navigation */
+@media (max-width: 520px) {
+  .app-nav {
+    margin:
+      -16px
+      -16px
+      20px;
+  }
+
+  .metric-card {
+    min-height: 128px;
+    padding: 20px;
+  }
+
+  .page-heading h2 {
+    font-size: 26px;
+  }
+
+  .page-heading .add-client-button {
+    font-size: 14px;
+    padding: 9px 13px;
+  }
+}
+    
 </style>
 </head>
 
@@ -488,88 +645,329 @@ async function goToDashboard() {
 }
   
   async function showDashboard(user) {
-    app.innerHTML = `
-      <div class="dashboard-top">
-        <div>
-          <strong>Keen Lawn Dashboard</strong>
-          <div style="font-size:13px;color:#68736d;">
-            ${escapeHtml(user.email)}
-          </div>
-        </div>
+  app.innerHTML = `
+    <div class="app-nav">
+      <button
+        class="nav-item active"
+        onclick="goToDashboard()">
+        Dashboard
+      </button>
 
-        <button class="secondary"
-          onclick="logout()">
-          Log Out
+      <button
+        class="nav-item"
+        onclick="showClientsPage()">
+        Clients
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showAddClient()">
+        Add Client
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showSchedule()">
+        Scheduler
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showTodayRoute()">
+        Today's Route
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showExpenses()">
+        Expenses
+      </button>
+    </div>
+
+    <div class="page-heading">
+      <h2>Dashboard</h2>
+
+      <button
+        class="add-client-button"
+        onclick="showAddClient()">
+        + Add Client
+      </button>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">
+        ACTIVE CLIENTS
+      </div>
+
+      <div
+        class="metric-number"
+        id="metricActiveClients">
+        —
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">
+        DUE NEXT 7 DAYS
+      </div>
+
+      <div
+        class="metric-number"
+        id="metricDueSoon">
+        —
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">
+        UNPAID INVOICES
+      </div>
+
+      <div
+        class="metric-number"
+        id="metricUnpaid">
+        —
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">
+        MONTH EXPENSES
+      </div>
+
+      <div
+        class="metric-number"
+        id="metricMonthExpenses">
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-heading-row">
+        <h2>Upcoming Services</h2>
+
+        <button
+          class="small-secondary"
+          onclick="showSchedule()">
+          Schedule
         </button>
       </div>
 
-<div class="card">
-  <h2>Schedule</h2>
-
-  <button onclick="showSchedule()">
-  View Schedule
-</button>
-</div>
-
-<div class="card">
-  <h2>Today's Jobs</h2>
-
-  <div id="todayJobList">
-    <p class="empty">Loading today's jobs...</p>
-  </div>
-</div>
-
-<div class="card">
-  <h2>Business Summary</h2>
-
-  <div id="businessSummary">
-    <p class="empty">Loading business summary...</p>
-  </div>
-</div>
-
-<div class="card">
-  <h2>Expenses</h2>
-
-  <button onclick="showExpenses()">
-    Manage Expenses
-  </button>
-</div>
-
-<div class="card">
-  <h2>Upcoming Jobs</h2>
-
-  <div id="upcomingJobList">
-    <p class="empty">
-      Loading upcoming jobs...
-    </p>
-  </div>
-</div>
-
-<div class="card">
-  <h2>Clients</h2>
-
-        <button onclick="showAddClient()">
-          + Add Client
-        </button>
-
-<button
-  class="secondary"
-  onclick="showInactiveClients()">
-  View Inactive Clients
-</button>
-
-        <div id="clientList">
-          <p class="empty">Loading clients...</p>
-        </div>
+      <div id="upcomingJobList">
+        <p class="empty">
+          Loading upcoming services...
+        </p>
       </div>
-    `;
+    </div>
 
-await loadClients();
-await loadTodayJobs();
-await loadBusinessSummary();
-await loadUpcomingJobs();    
+    <div class="card">
+      <h2>Business Snapshot</h2>
+
+      <div id="businessSummary">
+        <p class="empty">
+          Loading business summary...
+        </p>
+      </div>
+    </div>
+
+    <div class="dashboard-account">
+      <span>
+        ${escapeHtml(user.email)}
+      </span>
+
+      <button
+        class="logout-button"
+        onclick="logout()">
+        Log Out
+      </button>
+    </div>
+  `;
+
+  await loadDashboardMetrics();
+  await loadBusinessSummary();
+  await loadUpcomingJobs();
 }
 
+async function loadDashboardMetrics() {
+  const activeElement =
+    document.getElementById(
+      "metricActiveClients"
+    );
+
+  const dueElement =
+    document.getElementById(
+      "metricDueSoon"
+    );
+
+  const unpaidElement =
+    document.getElementById(
+      "metricUnpaid"
+    );
+
+  const expenseElement =
+    document.getElementById(
+      "metricMonthExpenses"
+    );
+
+  const now = new Date();
+
+  const localDateString = date => {
+    return `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
+  };
+
+  const today =
+    localDateString(now);
+
+  const sevenDaysFromNow =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 7
+    );
+
+  const sevenDayDate =
+    localDateString(sevenDaysFromNow);
+
+  const monthStart =
+    `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-01`;
+
+  const nextMonth =
+    new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      1
+    );
+
+  const nextMonthStart =
+    localDateString(nextMonth);
+
+  const [
+    clientsResult,
+    dueJobsResult,
+    unpaidResult,
+    expensesResult
+  ] = await Promise.all([
+    supabaseClient
+      .from("clients")
+      .select("id", {
+        count: "exact",
+        head: true
+      })
+      .eq("active", true),
+
+    supabaseClient
+      .from("jobs")
+      .select("id", {
+        count: "exact",
+        head: true
+      })
+      .gte("scheduled_date", today)
+      .lte(
+        "scheduled_date",
+        sevenDayDate
+      )
+      .neq("status", "Cancelled")
+      .neq("status", "Complete"),
+
+    supabaseClient
+      .from("jobs")
+      .select("price")
+      .eq("status", "Complete")
+      .eq(
+        "payment_status",
+        "Unpaid"
+      ),
+
+    supabaseClient
+      .from("expenses")
+      .select("amount")
+      .gte(
+        "expense_date",
+        monthStart
+      )
+      .lt(
+        "expense_date",
+        nextMonthStart
+      )
+  ]);
+
+  if (activeElement) {
+    activeElement.textContent =
+      clientsResult.error
+        ? "—"
+        : clientsResult.count ?? 0;
+  }
+
+  if (dueElement) {
+    dueElement.textContent =
+      dueJobsResult.error
+        ? "—"
+        : dueJobsResult.count ?? 0;
+  }
+
+  const unpaidTotal =
+    (unpaidResult.data || [])
+      .reduce(
+        (total, job) =>
+          total +
+          Number(job.price || 0),
+        0
+      );
+
+  if (unpaidElement) {
+    unpaidElement.textContent =
+      unpaidResult.error
+        ? "—"
+        : `$${unpaidTotal.toFixed(2)}`;
+  }
+
+  const monthExpenses =
+    (expensesResult.data || [])
+      .reduce(
+        (total, expense) =>
+          total +
+          Number(expense.amount || 0),
+        0
+      );
+
+  if (expenseElement) {
+    expenseElement.textContent =
+      expensesResult.error
+        ? "—"
+        : `$${monthExpenses.toFixed(2)}`;
+  }
+
+  if (clientsResult.error) {
+    console.error(
+      clientsResult.error
+    );
+  }
+
+  if (dueJobsResult.error) {
+    console.error(
+      dueJobsResult.error
+    );
+  }
+
+  if (unpaidResult.error) {
+    console.error(
+      unpaidResult.error
+    );
+  }
+
+  if (expensesResult.error) {
+    console.error(
+      expensesResult.error
+    );
+  }
+}
+  
 async function loadUpcomingJobs() {
   const list =
     document.getElementById("upcomingJobList");
@@ -1800,6 +2198,288 @@ async function deleteExpense(expenseId) {
     }, 500);
   }
 
+async function showClientsPage() {
+  app.innerHTML = `
+    <div class="app-nav">
+      <button
+        class="nav-item"
+        onclick="goToDashboard()">
+        Dashboard
+      </button>
+
+      <button
+        class="nav-item active">
+        Clients
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showAddClient()">
+        Add Client
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showSchedule()">
+        Scheduler
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showTodayRoute()">
+        Today's Route
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showExpenses()">
+        Expenses
+      </button>
+    </div>
+
+    <div class="page-heading">
+      <h2>Clients</h2>
+
+      <button
+        class="add-client-button"
+        onclick="showAddClient()">
+        + Add Client
+      </button>
+    </div>
+
+    <div class="card">
+      <div id="clientList">
+        <p class="empty">
+          Loading clients...
+        </p>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="showInactiveClients()">
+        View Inactive Clients
+      </button>
+    </div>
+  `;
+
+  await loadClients();
+}
+
+
+async function showTodayRoute() {
+  const now = new Date();
+
+  const today =
+    `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+
+  app.innerHTML = `
+    <div class="app-nav">
+      <button
+        class="nav-item"
+        onclick="goToDashboard()">
+        Dashboard
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showClientsPage()">
+        Clients
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showAddClient()">
+        Add Client
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showSchedule()">
+        Scheduler
+      </button>
+
+      <button
+        class="nav-item active">
+        Today's Route
+      </button>
+
+      <button
+        class="nav-item"
+        onclick="showExpenses()">
+        Expenses
+      </button>
+    </div>
+
+    <div class="page-heading">
+      <h2>Today's Route</h2>
+    </div>
+
+    <div class="card">
+      <div id="todayRouteList">
+        <p class="empty">
+          Loading today's route...
+        </p>
+      </div>
+    </div>
+  `;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select(`
+        *,
+        clients (
+          first_name,
+          last_name,
+          address,
+          state,
+          zip_code,
+          phone
+        )
+      `)
+      .eq(
+        "scheduled_date",
+        today
+      )
+      .neq(
+        "status",
+        "Cancelled"
+      )
+      .order(
+        "scheduled_time",
+        {
+          ascending: true
+        }
+      );
+
+  const list =
+    document.getElementById(
+      "todayRouteList"
+    );
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <p class="empty">
+        Could not load today's route:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No jobs scheduled for today.
+      </p>
+    `;
+
+    return;
+  }
+
+  list.innerHTML =
+    jobs.map(
+      (job, index) => {
+        const client =
+          job.clients || {};
+
+        const name =
+          `${client.first_name || ""}
+           ${client.last_name || ""}`
+            .trim() ||
+          "Client";
+
+        const address = [
+          client.address,
+          client.state,
+          client.zip_code
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        const time =
+          job.scheduled_time
+            ? job.scheduled_time
+                .slice(0, 5)
+            : "Flexible";
+
+        const price =
+          job.price != null
+            ? `$${Number(
+                job.price
+              ).toFixed(2)}`
+            : "No price";
+
+        const directions =
+          address
+            ? `https://www.google.com/maps/dir/?api=1&destination=${
+                encodeURIComponent(
+                  address
+                )
+              }`
+            : "";
+
+        return `
+          <div class="client">
+
+            <div class="client-name">
+              Stop ${index + 1} —
+              ${escapeHtml(name)}
+            </div>
+
+            <div class="client-detail">
+              ${escapeHtml(time)}
+              •
+              ${escapeHtml(price)}
+              •
+              ${escapeHtml(
+                job.status ||
+                "Scheduled"
+              )}
+            </div>
+
+            ${
+              address
+                ? `
+                  <div class="client-detail">
+                    ${escapeHtml(
+                      address
+                    )}
+                  </div>
+
+                  <button
+                    class="secondary"
+                    onclick="window.open(
+                      '${directions}',
+                      '_blank'
+                    )">
+                    Directions
+                  </button>
+                `
+                : ""
+            }
+
+            <button
+              class="secondary"
+              onclick="showEditJob(
+                '${job.id}'
+              )">
+              Manage Job
+            </button>
+
+          </div>
+        `;
+      }
+    ).join("");
+}
+  
   async function loadClients() {
     const list =
       document.getElementById("clientList");
