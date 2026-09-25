@@ -347,8 +347,14 @@ async function loadUpcomingJobs() {
 
   if (!list) return;
 
-  const today =
-    new Date().toISOString().split("T")[0];
+  const now = new Date();
+
+const today =
+  `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}`;
 
   const { data: jobs, error } =
     await supabaseClient
@@ -570,7 +576,7 @@ const monthlyNetIncome =
   <strong>This Month</strong>
 
   <div class="client-detail">
-    Revenue:
+    Paid Services:
     $${monthlyRevenue.toFixed(2)}
   </div>
 
