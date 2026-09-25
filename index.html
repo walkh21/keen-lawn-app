@@ -3681,20 +3681,13 @@ async function loadClientJobs(
 
 async function showJobHistory(clientId) {
   app.innerHTML = `
-    <div class="dashboard-top">
-      <div>
-        <strong>Job History</strong>
-      </div>
+    ${buildAppNav("clients")}
 
-      <button
-        class="secondary"
-        onclick="showClientProfile('${clientId}')">
-        Client
-      </button>
+    <div class="page-heading">
+      <h2>Job History</h2>
     </div>
 
     <div class="card">
-      <h2>Job History</h2>
 
       <div id="jobHistoryList">
         <p class="empty">
