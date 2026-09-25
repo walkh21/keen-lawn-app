@@ -1498,6 +1498,76 @@ async function markJobPaid(jobId) {
 
   await showOutstandingPayments();
 }
+
+async function testSquareInvoice() {
+  try {
+    const { data: { session }, error: sessionError } =
+      await supabaseClient.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    if (!session) {
+      alert("Please log in to Keen Lawn before testing Square.");
+      return;
+    }
+
+    const testEmail = prompt(
+      "Enter YOUR email address for the $1 Square Sandbox test invoice:"
+    );
+
+    if (!testEmail) return;
+
+    const { data, error } = await supabaseClient.functions.invoke(
+      "square-create-invoice",
+      {
+        body: {
+          customerName: "Keen Lawn Test",
+          customerEmail: testEmail.trim(),
+          amount: 1.00,
+          description: "Test Lawn Service",
+          serviceDate: "2026-09-25"
+        }
+      }
+    );
+
+    if (error) {
+      console.error("Square function error:", error);
+      alert(
+        "Square test failed: " +
+        (error.message || "Unknown function error")
+      );
+      return;
+    }
+
+    console.log("Square invoice result:", data);
+
+    if (!data?.success) {
+      alert(
+        "Square test failed: " +
+        (data?.error || "Unknown Square error")
+      );
+      return;
+    }
+
+    alert(
+      "SUCCESS! Square Sandbox invoice created.\n\n" +
+      "Invoice: " + (data.invoiceNumber || data.invoiceId || "Created") +
+      "\nStatus: " + (data.status || "Unknown")
+    );
+
+    if (data.publicUrl) {
+      window.open(data.publicUrl, "_blank");
+    }
+
+  } catch (error) {
+    console.error("Square test error:", error);
+
+    alert(
+      "Square test failed: " +
+      (error.message || "Unknown error")
+    );
+  }
+}
   
 async function loadTodayJobs() {
   const list = document.getElementById("todayJobList");
