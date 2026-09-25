@@ -52,14 +52,15 @@
      ========================= */
 
   header {
-    background: var(--white);
-    color: var(--text);
-    padding:
-      calc(20px + env(safe-area-inset-top))
-      22px
-      20px;
-    border-bottom: 1px solid var(--line);
-  }
+  background: var(--white);
+  color: var(--text);
+  padding:
+    calc(20px + env(safe-area-inset-top))
+    22px
+    20px;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
 
   header h1 {
     margin: 0;
@@ -75,6 +76,30 @@
     font-size: 14px;
   }
 
+.header-status {
+  position: absolute;
+  top: calc(20px + env(safe-area-inset-top));
+  right: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.header-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+    
   /* =========================
      MAIN APP AREA
      ========================= */
@@ -538,6 +563,7 @@
 <header>
   <h1>Keen Lawn Manager Live</h1>
   <p>Private lawn business manager</p>
+  <span class="header-status">Cloud Connected</span>
 </header>
 
 <main id="app">
