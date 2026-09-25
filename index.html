@@ -844,11 +844,132 @@ async function loadExpenses() {
             `
             : ""
         }
+        <button
+  class="secondary"
+  onclick="showEditExpense('${expense.id}')"
+  style="margin-top:10px;">
+  Edit Expense
+</button>
       </div>
     `;
   }).join("");
 }
 
+async function showEditExpense(expenseId) {
+  const { data: expense, error } =
+    await supabaseClient
+      .from("expenses")
+      .select("*")
+      .eq("id", expenseId)
+      .single();
+
+  if (error || !expense) {
+    alert(
+      "Could not load expense: " +
+      (error?.message || "Expense not found.")
+    );
+    return;
+  }
+
+  app.innerHTML = `
+    <div class="dashboard-top">
+      <div>
+        <strong>Edit Expense</strong>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="showExpenses()">
+        Expenses
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Edit Expense</h2>
+
+      <label>Date</label>
+      <input
+        id="editExpenseDate"
+        type="date"
+        value="${escapeHtml(expense.expense_date || "")}">
+
+      <label>Category</label>
+      <select id="editExpenseCategory">
+        <option value="Fuel"
+          ${expense.category === "Fuel" ? "selected" : ""}>
+          Fuel
+        </option>
+
+        <option value="Equipment"
+          ${expense.category === "Equipment" ? "selected" : ""}>
+          Equipment
+        </option>
+
+        <option value="Repairs"
+          ${expense.category === "Repairs" ? "selected" : ""}>
+          Repairs
+        </option>
+
+        <option value="Supplies"
+          ${expense.category === "Supplies" ? "selected" : ""}>
+          Supplies
+        </option>
+
+        <option value="Insurance"
+          ${expense.category === "Insurance" ? "selected" : ""}>
+          Insurance
+        </option>
+
+        <option value="Advertising"
+          ${expense.category === "Advertising" ? "selected" : ""}>
+          Advertising
+        </option>
+
+        <option value="Other"
+          ${expense.category === "Other" ? "selected" : ""}>
+          Other
+        </option>
+      </select>
+
+      <label>Description</label>
+      <input
+        id="editExpenseDescription"
+        value="${escapeHtml(expense.description || "")}">
+
+      <label>Amount</label>
+      <input
+        id="editExpenseAmount"
+        type="number"
+        step="0.01"
+        min="0"
+        value="${escapeHtml(expense.amount ?? "")}">
+
+      <button
+        onclick="updateExpense('${expense.id}')">
+        Save Changes
+      </button>
+
+      <button
+        class="secondary"
+        onclick="deleteExpense('${expense.id}')"
+        style="color:#a12622;">
+        Delete Expense
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showExpenses()">
+        Cancel
+      </button>
+
+      <div
+        id="editExpenseMessage"
+        class="message">
+      </div>
+    </div>
+  `;
+}
+  
 async function saveExpense() {
   const message =
     document.getElementById("expenseMessage");
@@ -934,6 +1055,104 @@ async function saveExpense() {
   message.textContent = "Expense saved.";
 
   await loadExpenses();
+}async function updateExpense(expenseId) {
+  const message =
+    document.getElementById(
+      "editExpenseMessage"
+    );
+
+  const expenseDate =
+    document.getElementById(
+      "editExpenseDate"
+    ).value;
+
+  const category =
+    document.getElementById(
+      "editExpenseCategory"
+    ).value;
+
+  const description =
+    document.getElementById(
+      "editExpenseDescription"
+    ).value.trim();
+
+  const amount =
+    document.getElementById(
+      "editExpenseAmount"
+    ).value;
+
+  if (!expenseDate) {
+    message.textContent =
+      "Please select an expense date.";
+    return;
+  }
+
+  if (!category) {
+    message.textContent =
+      "Please select a category.";
+    return;
+  }
+
+  if (!amount || Number(amount) <= 0) {
+    message.textContent =
+      "Please enter a valid expense amount.";
+    return;
+  }
+
+  message.textContent =
+    "Saving changes...";
+
+  const { error } =
+    await supabaseClient
+      .from("expenses")
+      .update({
+        expense_date: expenseDate,
+        category: category,
+        description:
+          description || null,
+        amount: Number(amount)
+      })
+      .eq("id", expenseId);
+
+  if (error) {
+    console.error(error);
+
+    message.textContent =
+      "Could not update expense: " +
+      error.message;
+
+    return;
+  }
+
+  await showExpenses();
+}
+
+
+async function deleteExpense(expenseId) {
+  const confirmed = confirm(
+    "Permanently delete this expense? This cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  const { error } =
+    await supabaseClient
+      .from("expenses")
+      .delete()
+      .eq("id", expenseId);
+
+  if (error) {
+    console.error(error);
+
+    alert(
+      "Could not delete expense: " +
+      error.message
+    );
+
+    return;
+  }
+
+  await showExpenses();
 }
   
   function showAddClient() {
