@@ -1540,22 +1540,49 @@ async function loadTodayJobs() {
 }
 
 async function showExpenses() {
-  app.innerHTML = `
-    <div class="dashboard-top">
-      <div>
-        <strong>Keen Lawn Expenses</strong>
-      </div>
+  <div class="app-nav">
+  <button
+    class="nav-item"
+    onclick="goToDashboard()">
+    Dashboard
+  </button>
 
-      <button
-        class="secondary"
-        onclick="returnToDashboard()">
-        Dashboard
-      </button>
-    </div>
+  <button
+    class="nav-item"
+    onclick="showClientsPage()">
+    Clients
+  </button>
 
-    <div class="card">
-      <h2>Add Expense</h2>
+  <button
+    class="nav-item"
+    onclick="showAddClient()">
+    Add Client
+  </button>
 
+  <button
+    class="nav-item"
+    onclick="showSchedule()">
+    Scheduler
+  </button>
+
+  <button
+    class="nav-item"
+    onclick="showTodayRoute()">
+    Today's Route
+  </button>
+
+  <button
+    class="nav-item active">
+    Expenses
+  </button>
+</div>
+
+<div class="page-heading">
+  <h2>Expenses</h2>
+</div>
+
+<div class="card">
+  <h2>Add Expense</h2>
       <label>Date</label>
       <input id="expenseDate" type="date">
 
