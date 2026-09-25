@@ -4117,8 +4117,13 @@ async function showEditJob(jobId) {
   }
 
   app.innerHTML = `
-    <div class="card">
-      <h2>Manage Job</h2>
+  ${buildAppNav("scheduler")}
+
+  <div class="page-heading">
+    <h2>Manage Job</h2>
+  </div>
+
+  <div class="card">
 
       <label>Service Date</label>
       <input
