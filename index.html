@@ -481,16 +481,17 @@ async function loadBusinessSummary() {
     );
 
   const unpaidRevenue = allJobs
-    .filter(job =>
-      job.payment_status === "Unpaid" &&
-      job.status !== "Cancelled"
-    )
-    .reduce(
-      (total, job) =>
-        total + Number(job.price || 0),
-      0
-    );
-
+  .filter(job =>
+    job.payment_status === "Unpaid" &&
+    job.status === "Complete"
+  )
+  .reduce(
+    (total, job) =>
+      total + Number(job.price || 0),
+    0
+  );
+   
+  
   const completedJobs =
     allJobs.filter(
       job => job.status === "Complete"
@@ -603,11 +604,201 @@ const monthlyNetIncome =
   $${unpaidRevenue.toFixed(2)}
 </div>
 
+<button
+  class="secondary"
+  onclick="showOutstandingPayments()"
+  style="margin-top:12px;">
+  View Outstanding Payments
+</button>
+
 <div class="client-detail">
   <strong>Completed Jobs:</strong>
   ${completedJobs}
 </div>
   `;
+}
+
+async function showOutstandingPayments() {
+  app.innerHTML = `
+    <div class="dashboard-top">
+      <div>
+        <strong>Outstanding Payments</strong>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="goToDashboard()">
+        Dashboard
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Money Owed</h2>
+
+      <div id="outstandingPaymentList">
+        <p class="empty">
+          Loading outstanding payments...
+        </p>
+      </div>
+    </div>
+  `;
+
+  const { data: jobs, error } =
+    await supabaseClient
+      .from("jobs")
+      .select(`
+        *,
+        clients (
+          first_name,
+          last_name,
+          phone
+        )
+      `)
+      .eq("status", "Complete")
+      .eq("payment_status", "Unpaid")
+      .order("scheduled_date", {
+        ascending: true
+      });
+
+  const list =
+    document.getElementById(
+      "outstandingPaymentList"
+    );
+
+  if (error) {
+    console.error(error);
+
+    list.innerHTML = `
+      <p class="empty">
+        Could not load outstanding payments:
+        ${escapeHtml(error.message)}
+      </p>
+    `;
+    return;
+  }
+
+  if (!jobs || jobs.length === 0) {
+    list.innerHTML = `
+      <p class="empty">
+        No outstanding payments.
+      </p>
+    `;
+    return;
+  }
+
+  const totalOutstanding =
+    jobs.reduce(
+      (total, job) =>
+        total + Number(job.price || 0),
+      0
+    );
+
+  const paymentCards =
+    jobs.map(job => {
+      const client =
+        job.clients || {};
+
+      const clientName =
+        `${client.first_name || ""}
+         ${client.last_name || ""}`.trim()
+        || "Client";
+
+      const price =
+        `$${Number(
+          job.price || 0
+        ).toFixed(2)}`;
+
+      return `
+        <div class="client">
+
+          <div class="client-name">
+            ${escapeHtml(clientName)}
+          </div>
+
+          <div class="client-detail">
+            Service:
+            ${escapeHtml(job.scheduled_date)}
+          </div>
+
+          <div class="client-detail">
+            Amount Due:
+            <strong>
+              ${escapeHtml(price)}
+            </strong>
+          </div>
+
+          ${
+            client.phone
+              ? `
+                <div class="client-detail">
+                  ${escapeHtml(client.phone)}
+                </div>
+              `
+              : ""
+          }
+
+          <button
+            onclick="markJobPaid(
+              '${job.id}'
+            )">
+            Mark Paid
+          </button>
+
+          <button
+            class="secondary"
+            onclick="showEditJob(
+              '${job.id}'
+            )">
+            Manage Job
+          </button>
+
+        </div>
+      `;
+    }).join("");
+
+  list.innerHTML = `
+    <div style="
+      padding-bottom:16px;
+      margin-bottom:8px;
+      border-bottom:1px solid #e4e9e6;
+    ">
+      <strong>
+        Total Outstanding:
+        $${totalOutstanding.toFixed(2)}
+      </strong>
+    </div>
+
+    ${paymentCards}
+  `;
+}
+
+async function markJobPaid(jobId) {
+  const confirmed = confirm(
+    "Mark this job as paid?"
+  );
+
+  if (!confirmed) return;
+
+  const { error } =
+    await supabaseClient
+      .from("jobs")
+      .update({
+        payment_status: "Paid"
+      })
+      .eq("id", jobId);
+
+  if (error) {
+    console.error(error);
+
+    alert(
+      "Could not mark payment as paid: " +
+      error.message
+    );
+
+    return;
+  }
+
+  await showOutstandingPayments();
 }
   
 async function loadTodayJobs() {
