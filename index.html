@@ -3003,19 +3003,17 @@ ${stops}
 }
   
   async function showClientProfile(clientId) {
-  app.innerHTML = `<div style="margin-bottom:16px;">
-  <button
-    class="secondary"
-    onclick="goToDashboard()"
-  >
-    ← Dashboard
-  </button>
-</div>
-    <div class="card">
-      <h2>Client Profile</h2>
-      <p>Loading client...</p>
-    </div>
-  `;
+  app.innerHTML = `
+  ${buildAppNav("clients")}
+
+  <div class="page-heading">
+    <h2>Client Profile</h2>
+  </div>
+
+  <div class="card">
+    <p>Loading client...</p>
+  </div>
+`;
 
   const { data: client, error } =
     await supabaseClient
@@ -3050,19 +3048,13 @@ ${stops}
       : "Not set";
 
   app.innerHTML = `
-    <div class="dashboard-top">
-      <div>
-        <strong>Client Profile</strong>
-      </div>
+  ${buildAppNav("clients")}
 
-      <button
-        class="secondary"
-        onclick="goToDashboard()">
-        Dashboard
-      </button>
-    </div>
+  <div class="page-heading">
+    <h2>Client Profile</h2>
+  </div>
 
-    <div class="card">
+  <div class="card">
 
       <h2>${escapeHtml(fullName)}</h2>
       <p>
