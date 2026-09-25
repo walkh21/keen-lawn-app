@@ -362,13 +362,14 @@ async function loadUpcomingJobs() {
       `)
       .gte("scheduled_date", today)
       .neq("status", "Cancelled")
+    .neq("status", "Complete")
       .order("scheduled_date", {
         ascending: true
       })
       .order("scheduled_time", {
         ascending: true
       })
-      .limit(10);
+      .limit(3);
 
   if (error) {
     console.error(error);
@@ -434,7 +435,14 @@ async function loadUpcomingJobs() {
 
       </div>
     `;
-  }).join("");
+  }).join("") + `
+  <button
+    class="secondary"
+    onclick="showSchedule()"
+    style="margin-top:16px;">
+    View Full Schedule
+  </button>
+`;
 }
   
 async function loadBusinessSummary() {
