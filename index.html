@@ -8,143 +8,372 @@
   <title>Keen Lawn</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+  :root {
+    --navy: #0d2b3d;
+    --navy-light: #173f57;
+    --blue: #176b9a;
+    --blue-dark: #12587f;
+    --blue-soft: #e9f3f8;
+    --page: #f4f7f9;
+    --white: #ffffff;
+    --text: #17232d;
+    --muted: #718092;
+    --line: #d9e2e8;
+    --green: #2e8b45;
+    --green-soft: #e9f6ec;
+    --danger: #a12622;
+    --shadow: 0 2px 8px rgba(15, 43, 61, 0.07);
+    --radius: 15px;
+  }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f7f5;
-      color: #17211b;
-    }
+  * {
+    box-sizing: border-box;
+  }
 
-    header {
-      background: #163d2a;
-      color: white;
-      padding: 22px 20px;
-    }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-    header h1 {
-      margin: 0;
-      font-size: 26px;
-    }
+  body {
+    margin: 0;
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Arial,
+      sans-serif;
+    background: var(--page);
+    color: var(--text);
+    min-height: 100vh;
+  }
 
-    header p {
-      margin: 5px 0 0;
-      opacity: .8;
-      font-size: 14px;
-    }
+  /* =========================
+     HEADER
+     ========================= */
 
+  header {
+    background: var(--white);
+    color: var(--text);
+    padding:
+      calc(20px + env(safe-area-inset-top))
+      22px
+      20px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 27px;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  header p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* =========================
+     MAIN APP AREA
+     ========================= */
+
+  main {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* =========================
+     CARDS
+     ========================= */
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 21px;
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.25px;
+  }
+
+  .card h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 750;
+  }
+
+  h2,
+  h3 {
+    color: var(--text);
+  }
+
+  p {
+    line-height: 1.5;
+  }
+
+  /* =========================
+     DASHBOARD TOP
+     ========================= */
+
+  .dashboard-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .dashboard-top strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .dashboard-top button {
+    width: auto;
+    min-width: 88px;
+    margin: 0;
+  }
+
+  /* =========================
+     FORMS
+     ========================= */
+
+  label {
+    display: block;
+    margin: 16px 0 6px;
+    color: #34434f;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 13px;
+    border: 1px solid #cfd9df;
+    border-radius: 10px;
+    background: var(--white);
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--blue);
+    box-shadow:
+      0 0 0 3px rgba(23, 107, 154, 0.12);
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  /* =========================
+     BUTTONS
+     ========================= */
+
+  button {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 14px;
+    padding: 11px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--blue);
+    color: var(--white);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 750;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active {
+    transform: translateY(1px);
+  }
+
+  button:hover {
+    background: var(--blue-dark);
+  }
+
+  button.secondary {
+    background: var(--blue-soft);
+    color: var(--blue-dark);
+  }
+
+  button.secondary:hover {
+    background: #dcecf4;
+  }
+
+  /* =========================
+     CLIENT / JOB ROWS
+     ========================= */
+
+  .client {
+    padding: 15px 0;
+    border-top: 1px solid #e5ebef;
+  }
+
+  .client:first-child {
+    border-top: 0;
+  }
+
+  .client-name {
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 800;
+  }
+
+  .client-detail {
+    margin-top: 5px;
+    color: #657481;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .client button {
+    margin-top: 10px;
+  }
+
+  /* =========================
+     EMPTY / STATUS MESSAGES
+     ========================= */
+
+  .empty {
+    margin: 0;
+    padding: 18px 8px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .message {
+    margin-top: 12px;
+    color: #566571;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* =========================
+     PHOTOS
+     ========================= */
+
+  img {
+    max-width: 100%;
+  }
+
+  /* =========================
+     SCROLLBARS
+     ========================= */
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c8d4db;
+    border-radius: 20px;
+  }
+
+  /* =========================
+     TABLET / DESKTOP
+     ========================= */
+
+  @media (min-width: 760px) {
     main {
-      max-width: 700px;
-      margin: auto;
-      padding: 20px;
+      padding: 28px 24px 50px;
     }
 
     .card {
-      background: white;
+      padding: 24px;
+    }
+
+    header {
+      padding-left: max(
+        24px,
+        calc((100vw - 760px) / 2 + 24px)
+      );
+
+      padding-right: max(
+        24px,
+        calc((100vw - 760px) / 2 + 24px)
+      );
+    }
+  }
+
+  /* =========================
+     MOBILE
+     ========================= */
+
+  @media (max-width: 520px) {
+    header {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    header h1 {
+      font-size: 25px;
+    }
+
+    main {
+      padding: 16px;
+    }
+
+    .card {
+      padding: 18px;
       border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.06);
-    }
-
-    h2, h3 {
-      margin-top: 0;
-    }
-
-    label {
-      display: block;
-      margin-top: 14px;
-      margin-bottom: 5px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccd4cf;
-      border-radius: 8px;
-      font-size: 16px;
-      background: white;
-    }
-
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 18px;
-      padding: 13px;
-      border: 0;
-      border-radius: 8px;
-      background: #1d6b45;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button.secondary {
-      background: #e8efeb;
-      color: #163d2a;
+      margin-bottom: 14px;
     }
 
     .dashboard-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+      padding: 14px 16px;
+    }
+
+    .dashboard-top strong {
+      font-size: 16px;
     }
 
     .dashboard-top button {
-      width: auto;
-      margin: 0;
-      padding: 9px 14px;
+      min-width: auto;
+      padding-left: 13px;
+      padding-right: 13px;
+      font-size: 13px;
     }
-
-    .client {
-      border-top: 1px solid #e4e9e6;
-      padding: 14px 0;
-    }
-
-    .client:first-child {
-      border-top: 0;
-    }
-
-    .client-name {
-      font-weight: bold;
-      font-size: 17px;
-    }
-
-    .client-detail {
-      margin-top: 4px;
-      color: #56615b;
-      font-size: 14px;
-    }
-
-    .empty {
-      color: #68736d;
-      text-align: center;
-      padding: 18px 0;
-    }
-
-    .message {
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    .hidden {
-      display: none;
-    }
-  </style>
+  }
+</style>
 </head>
 
 <body>
