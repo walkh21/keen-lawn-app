@@ -2860,8 +2860,58 @@ async function showAddJob(clientId) {
 
       <div id="jobMessage" class="message"></div>
     </div>
-  `;
+    `;
 }
+
+function getMonthlyServiceDate(
+  originalDate,
+  monthsToAdd
+) {
+  const originalYear =
+    originalDate.getFullYear();
+
+  const originalMonth =
+    originalDate.getMonth();
+
+  const originalDay =
+    originalDate.getDate();
+
+  const targetMonthDate =
+    new Date(
+      originalYear,
+      originalMonth + monthsToAdd,
+      1,
+      12
+    );
+
+  const targetYear =
+    targetMonthDate.getFullYear();
+
+  const targetMonth =
+    targetMonthDate.getMonth();
+
+  const lastDayOfTargetMonth =
+    new Date(
+      targetYear,
+      targetMonth + 1,
+      0,
+      12
+    ).getDate();
+
+  const safeDay =
+    Math.min(
+      originalDay,
+      lastDayOfTargetMonth
+    );
+
+  return new Date(
+    targetYear,
+    targetMonth,
+    safeDay,
+    12
+  );
+}
+
 async function saveJob(clientId) {
   const message =
     document.getElementById("jobMessage");
