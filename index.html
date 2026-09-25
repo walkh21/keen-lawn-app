@@ -2887,20 +2887,49 @@ ${stops}
   }
 
   app.innerHTML = `
-    <div class="dashboard-top">
-      <div>
-        <strong>Keen Lawn Route Planner</strong>
-      </div>
+  <div class="app-nav">
+    <button
+      class="nav-item"
+      onclick="goToDashboard()">
+      Dashboard
+    </button>
 
-      <button
-        class="secondary"
-        onclick="returnToDashboard()">
-        Dashboard
-      </button>
-    </div>
+    <button
+      class="nav-item"
+      onclick="showClientsPage()">
+      Clients
+    </button>
 
-    ${scheduleHtml}
-  `;
+    <button
+      class="nav-item"
+      onclick="showAddClient()">
+      Add Client
+    </button>
+
+    <button
+      class="nav-item active">
+      Scheduler
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="showTodayRoute()">
+      Today's Route
+    </button>
+
+    <button
+      class="nav-item"
+      onclick="showExpenses()">
+      Expenses
+    </button>
+  </div>
+
+  <div class="page-heading">
+    <h2>Scheduler</h2>
+  </div>
+
+  ${scheduleHtml}
+`;
 }
   
   async function showClientProfile(clientId) {
@@ -4794,7 +4823,7 @@ async function showInactiveClients() {
 
       <button
         class="secondary"
-        onclick="returnToDashboard()">
+        onclick="showClientsPage()">
         Back to Active Clients
       </button>
     </div>
