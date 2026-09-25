@@ -1578,10 +1578,21 @@ ${stops}
       : "Not set";
 
   app.innerHTML = `
+    <div class="dashboard-top">
+      <div>
+        <strong>Client Profile</strong>
+      </div>
+
+      <button
+        class="secondary"
+        onclick="goToDashboard()">
+        Dashboard
+      </button>
+    </div>
+
     <div class="card">
 
       <h2>${escapeHtml(fullName)}</h2>
-
       <p>
         <strong>Phone</strong><br>
         ${escapeHtml(client.phone || "Not provided")}
@@ -1863,7 +1874,16 @@ async function loadPropertyPhotos(clientId) {
                 photo.caption || "Property photo"
               )}
             </div>
-
+<button
+  class="secondary"
+  onclick="deletePropertyPhoto(
+    '${photo.id}',
+    '${clientId}',
+    '${photo.photo_url}'
+  )"
+  style="color:#a12622;margin-top:10px;">
+  Delete Photo
+</button>
           </div>
         `;
       })
@@ -1873,6 +1893,53 @@ async function loadPropertyPhotos(clientId) {
     photoCards.filter(Boolean).join("");
 }
 
+async function deletePropertyPhoto(
+  photoId,
+  clientId,
+  photoPath
+) {
+  const confirmed = confirm(
+    "Permanently delete this property photo? This cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  const { error: storageError } =
+    await supabaseClient.storage
+      .from("property-photos")
+      .remove([photoPath]);
+
+  if (storageError) {
+    console.error(storageError);
+
+    alert(
+      "Could not delete photo: " +
+      storageError.message
+    );
+
+    return;
+  }
+
+  const { error: databaseError } =
+    await supabaseClient
+      .from("property_photos")
+      .delete()
+      .eq("id", photoId);
+
+  if (databaseError) {
+    console.error(databaseError);
+
+    alert(
+      "Photo was removed from storage, but its record could not be deleted: " +
+      databaseError.message
+    );
+
+    return;
+  }
+
+  await loadPropertyPhotos(clientId);
+}
+  
 async function loadClientJobs(clientId) {
   const list =
     document.getElementById("clientJobList");
