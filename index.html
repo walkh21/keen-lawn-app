@@ -1472,6 +1472,7 @@ async function deleteExpense(expenseId) {
       `)
       .gte("scheduled_date", todayString)
       .neq("status", "Cancelled")
+    .neq("status", "Complete")
       .order("scheduled_date", {
         ascending: true
       })
